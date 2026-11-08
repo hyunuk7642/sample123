@@ -1231,9 +1231,9 @@ body.t-admin .slot{box-shadow:0 8px 24px rgba(2,8,24,.25)}
 .meter{height:12px;background:var(--soft);border-radius:99px;position:relative;overflow:hidden}.meter::after{content:'';position:absolute;left:50%;height:100%;border-left:1px solid var(--muted)}.meter i{height:100%;position:absolute;background:var(--teal)}
 .topic-option{min-height:100px}.topic-option b{font-size:20px}
 @media(max-width:560px){.research-rail{gap:4px;font-size:12px}.research-deck{gap:5px;min-height:210px}.draw-card{width:17%;height:145px;padding:8px}.draw-card::after{font-size:32px}.scale{grid-template-columns:repeat(2,minmax(0,1fr))}.research-card{padding:22px 16px}.names{font-size:12px}}
-</style></head><body>
+</style></head><body><div class="intro" id="intro" role="dialog" aria-modal="true" aria-label="AI-e랩 연구 여정 시작" hidden></div>
 <div class="app-bg" aria-hidden="true"><div class="aurora"><i></i><i></i><i></i></div><div class="grain"></div></div>
-<header class="top"><div class="top-in"><div class="brand"><i class="dot" aria-hidden="true"></i><h1>AI-e랩 연구 여정</h1><span>AI융합교육대학원 · 나의 결, 우리의 겹</span></div></div></header>
+<header class="top"><div class="top-in"><div class="brand"><i class="dot" aria-hidden="true"></i><h1><button class="brand-btn" id="brandBtn" aria-label="입자 시작 화면 다시 보기">AI-e랩 연구 여정</button></h1><span>AI융합교육대학원 · 나의 결, 우리의 겹</span></div></div></header>
 <p class="demo">연구 내용은 수합 전입니다. 주제는 연구회 이름을 바탕으로 임시 분류했으며, 연구 설계·현장 적용·학생의 배움은 포스터 수합 후 채워집니다.</p>
 <main><ol class="research-rail" id="steps" aria-label="진행 단계"></ol><section id="stage" aria-live="polite" tabindex="-1"></section></main>
 <script>
@@ -1408,4 +1408,107 @@ function render(){
  }
 }
 render();
+function startParticles(){
+  cancelAnimationFrame(introRAF);
+  const cv=bySelector('#pcv');if(!cv)return;const dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=Math.min(760,cv.parentElement.clientWidth),H=Math.round(W*(W<500?.42:.3));
+  cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+  const off=document.createElement('canvas');off.width=W;off.height=H;const o=off.getContext('2d',{willReadFrequently:true});
+  let fs=H*.78;o.font=`${fs}px "Do Hyeon"`;const t1='AI-e ',t2='LAB';
+  const tw=o.measureText(t1+t2).width;if(tw>W*.94){fs*=W*.94/tw;o.font=`${fs}px "Do Hyeon"`}
+  const w1=o.measureText(t1).width,w2=o.measureText(t2).width,x0=(W-w1-w2)/2;
+  o.textBaseline='middle';o.fillStyle='#f00';o.fillText(t1,x0,H/2+fs*.04);o.fillStyle='#0f0';o.fillText(t2,x0+w1,H/2+fs*.04);
+  const d=o.getImageData(0,0,W,H).data,step=Math.max(3,Math.round(W/230)),P=[];
+  for(let y=0;y<H;y+=step)for(let x=0;x<W;x+=step){const i=(y*W+x)*4;if(d[i+3]>140){const teal=d[i+1]>d[i];
+    const a=Math.random()*Math.PI*2,r=W*.25+Math.random()*W*.6;
+    P.push({tx:x,ty:y,x:W/2+Math.cos(a)*r,y:H/2+Math.sin(a)*r*.6,vx:0,vy:0,teal,s:Math.random()<.15?2.2:1.6,tw:Math.random()*6})}}
+  const still=reduced();if(still)P.forEach(p=>{p.x=p.tx;p.y=p.ty});
+  let mx=-999,my=-999,t0=performance.now();
+  const host=bySelector('#intro');
+  const mv=e=>{const r=cv.getBoundingClientRect();mx=(e.clientX-r.left)*(W/r.width);my=(e.clientY-r.top)*(H/r.height)};
+  const lv=()=>{mx=my=-999};
+  host.addEventListener('pointermove',mv);host.addEventListener('pointerdown',mv);host.addEventListener('pointerleave',lv);const up=e=>{if(e.pointerType!=='mouse')lv()};host.addEventListener('pointerup',up);
+  introOff=()=>{host.removeEventListener('pointermove',mv);host.removeEventListener('pointerdown',mv);host.removeEventListener('pointerleave',lv);host.removeEventListener('pointerup',up)};
+  const R=Math.max(50,W*.09);
+  const frame=now=>{
+    if(host.hidden)return;const el=(now-t0)/1000,k=Math.min(.085,.012+el*.05),swirl=Math.max(0,1-el/1.4);
+    g.clearRect(0,0,W,H);
+    for(const p of P){
+      if(!still){
+        let ax=(p.tx-p.x)*k,ay=(p.ty-p.y)*k;
+        if(swirl){const dx=p.x-W/2,dy=p.y-H/2;ax+=-dy*.02*swirl;ay+=dx*.02*swirl}
+        const qx=p.x-mx,qy=p.y-my,q2=qx*qx+qy*qy;
+        if(q2<R*R){const q=Math.sqrt(q2)||1,f=(R-q)/R*7;ax+=qx/q*f;ay+=qy/q*f}
+        p.vx=(p.vx+ax)*.82;p.vy=(p.vy+ay)*.82;p.x+=p.vx;p.y+=p.vy;
+      }
+    }
+    const tw=now/600;
+    g.fillStyle='#FFFFFF';for(const p of P)if(!p.teal){g.globalAlpha=.72+.28*Math.sin(tw+p.tw);g.fillRect(p.x,p.y,p.s,p.s)}
+    g.fillStyle='#45F0CF';for(const p of P)if(p.teal){g.globalAlpha=.8+.2*Math.sin(tw+p.tw);g.fillRect(p.x,p.y,p.s,p.s)}
+    g.globalAlpha=1;
+    if(!still)introRAF=requestAnimationFrame(frame);
+  };
+  introRAF=requestAnimationFrame(frame);
+}
+function decodeText(el,text){
+  if(!el)return;if(reduced()){el.textContent=text;return}
+  const G='가나다라마바사아자차카타파하ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#+*';let f=0;const N=26;
+  const iv=setInterval(()=>{f++;el.textContent=[...text].map((ch,i)=>ch===' '||i<f/N*text.length?ch:G[Math.floor(Math.random()*G.length)]).join('');
+    if(f>=N){clearInterval(iv);el.textContent=text}},45);introTimers.push(iv);
+}
+function typeLoop(){
+  const el=bySelector('#pText');if(!el)return;if(reduced()){el.textContent=PROMPTS[0];return}
+  const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ',JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const syl=(c,j,k)=>String.fromCharCode(0xAC00+(c*21+j)*28+k);
+  const frames=t=>{const out=[];let done='',prev=null;
+    for(const ch of t){const n=ch.charCodeAt(0)-0xAC00;
+      if(n>=0&&n<11172){const c=Math.floor(n/588),j=Math.floor(n%588/28),k=n%28,asJong=JONG.indexOf(CHO[c]);
+        if(prev&&prev.k===0&&asJong>0)out.push(done.slice(0,-1)+syl(prev.c,prev.j,asJong));
+        else out.push(done+CHO[c]);
+        out.push(done+syl(c,j,0));if(k)out.push(done+syl(c,j,k));
+        done+=ch;prev={c,j,k}}
+      else{done+=ch;prev=null;out.push(done)}}
+    return out};
+  const show=s=>{el.innerHTML=s?esc(s.slice(0,-1))+`<span class="p-new">${esc(s.slice(-1))}</span>`:''};
+  let i=0;
+  const run=()=>{if(!el.isConnected)return;const f=frames(PROMPTS[i]);let k=0;
+    const typ=()=>{if(!el.isConnected)return;show(f[k]);k++;
+      if(k<f.length){introTimers.push(setTimeout(typ,f[k-1].endsWith(' ')?40:55+Math.random()*70))}
+      else introTimers.push(setTimeout(del,1900))};
+    let cur=PROMPTS[i];
+    const del=()=>{if(!el.isConnected)return;cur=cur.slice(0,-1);el.textContent=cur;
+      if(cur.length)introTimers.push(setTimeout(del,28));else{i=(i+1)%PROMPTS.length;introTimers.push(setTimeout(run,320))}};
+    typ()};
+  introTimers.push(setTimeout(run,450));
+}
+function clearIntroFx(){cancelAnimationFrame(introRAF);introTimers.forEach(t=>{clearTimeout(t);clearInterval(t)});introTimers=[];introOff&&introOff();introOff=null}
+
+const bySelector=s=>document.querySelector(s);
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let introRAF=null,introTimers=[],introOff=null;
+const PROMPTS=['20개 연구회 중 나와 만날 연구 카드 뽑기','대학원에서 시작된 질문을 교실로 이어 보기','학생의 목소리와 배움의 변화 따라가기','12개의 질문으로 나의 연구 성향 발견하기','새로운 연구와 동료의 교실로 연결하기'];
+function openIntro(){
+ clearIntroFx();const host=$('intro');host.classList.remove('out');host.hidden=false;
+ document.querySelector('main').inert=true;document.querySelector('header').inert=true;document.body.style.overflow='hidden';
+ host.innerHTML=`<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
+ <div class="intro-in"><p class="i-live"><span class="live-dot"></span>AI융합교육대학원 · 나의 결, 우리의 겹</p>
+ <canvas id="pcv" role="img" aria-label="AI-e LAB"></canvas><p class="i-sub" id="iSub">대학원에서 시작된 질문, 교실에서 만나 다시 이어지다</p>
+ <div class="prompt"><span class="p-spark" aria-hidden="true">✦</span><span class="p-line"><span class="p-text" id="pText"></span><span class="caret"></span></span><span class="p-send" aria-hidden="true">→</span></div>
+ <button class="i-cta" id="introGo">${S.card?'연구 여정 이어 보기':'연구 여정 시작하기'} <span aria-hidden="true">→</span></button>
+ <p class="i-hint">글자 위를 손가락이나 마우스로 쓸어 보세요</p>
+ <div class="i-feats"><span class="tag">20개 연구회</span><span class="tag">6단계 연구 여정</span><span class="tag">나의 연구 MBTI</span></div></div>`;
+ $('introGo').onclick=closeIntro;$('introGo').focus();typeLoop();
+ const ready=document.fonts?.load('60px "Do Hyeon"')||Promise.resolve();
+ Promise.race([ready,new Promise(r=>setTimeout(r,900))]).then(()=>{if(host.hidden)return;startParticles();decodeText($('iSub'),'대학원에서 시작된 질문, 교실에서 만나 다시 이어지다')});
+}
+function closeIntro(){
+ const host=$('intro');const finish=()=>{clearIntroFx();host.hidden=true;host.innerHTML='';document.body.style.overflow='';document.querySelector('main').inert=false;document.querySelector('header').inert=false;$('stage').focus({preventScroll:true});};
+ if(reduced()){finish();return}host.classList.add('out');setTimeout(finish,480);
+}
+let introResize;
+window.addEventListener('resize',()=>{if($('intro').hidden)return;clearTimeout(introResize);introResize=setTimeout(()=>{if($('intro').hidden)return;introOff?.();startParticles()},200)});
+$('brandBtn').onclick=openIntro;
+openIntro();
 </script></body></html>
