@@ -1256,6 +1256,17 @@ main{max-width:1040px;padding-bottom:60px}#stage{gap:24px}#stage>h1{text-align:c
 :root .btn.ghost{background:transparent;border:1px solid #9f9277;box-shadow:none}
 :root .btn:hover{transform:translateY(-3px);box-shadow:4px 6px 0 #bcaa81}
 #stage h1,#stage h2,#stage h3{color:#302f29;word-break:keep-all;overflow-wrap:break-word} .top{position:relative;top:auto}.brand span{color:#d3c29a}
+</style><style id="tarot-theatre-theme">
+.intro{padding:24px 30px;overflow-x:hidden}.intro-in{max-width:1180px;width:100%;gap:12px;padding:10px 0}.intro-kicker{margin-top:8px}.i-live{margin:0;padding:3px}.tarot-theatre{overflow:hidden;position:relative;display:grid;grid-template-columns:1fr minmax(260px,420px) 1fr;gap:20px;width:100%;align-items:center;min-height:380px}.summon-stage{height:380px;position:relative;display:grid;place-items:center;perspective:1200px}.summon-stage #pcv{position:absolute;inset:0;pointer-events:none;z-index:3;transition:opacity 1.2s}.assembled #pcv{opacity:.18}.hero-tarot{border:0;padding:0;background:transparent;width:230px;height:340px;perspective:1200px;cursor:pointer;z-index:2;opacity:0;transform:scale(.92);transition:opacity 1.4s,transform 1.4s}.assembled .hero-tarot{opacity:1;transform:scale(1)}.flip-inner{position:relative;display:block;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.05s cubic-bezier(.22,.7,.16,1)}.hero-tarot.flipped .flip-inner{transform:rotateY(180deg)}.tarot-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:24px 18px;border:7px solid #e8d6a8;border-radius:7px;outline:1px solid #9f8244;box-shadow:0 16px 45px #0008,0 0 65px #c7a25918;color:#dfc584;background:repeating-linear-gradient(45deg,transparent 0 12px,#d0b5670c 12px 13px),#233f36}.tarot-face::before{content:'';position:absolute;inset:7px;border:1px solid #baa065;pointer-events:none}.tarot-front{transform:rotateY(180deg);background:#e9d9b3;color:#2c4b40;border-color:#f3e8cb}.face-number{font:9px Georgia,'Gowun Batang',serif;letter-spacing:.12em}.card-medallion{font:88px Georgia,serif;width:145px;height:175px;border:1px solid currentColor;border-radius:50%;display:grid;place-items:center;position:relative}.card-medallion::after{content:'';position:absolute;inset:6px;border:1px solid currentColor;border-radius:50%;opacity:.35}.face-title{font:17px Georgia,serif;letter-spacing:.1em}.face-foot{font:9px 'Gowun Batang',serif;letter-spacing:.06em}.face-korean{font:16px 'Gowun Batang',serif;line-height:1.8}.tarot-front .card-medallion{height:95px;width:95px;font-size:62px}.celestial-ring{position:absolute;width:360px;height:360px;border:1px solid #a88b4544;border-radius:50%;box-shadow:0 0 0 18px #a88b4508,0 0 0 19px #a88b4522;animation:celestial-turn 80s linear infinite}.celestial-ring::before,.celestial-ring::after{content:'✧';position:absolute;font-size:28px;color:#c4a35e;left:50%;top:-18px}.celestial-ring::after{top:auto;bottom:-18px}.intro-wing{display:grid;justify-items:center;gap:18px;color:#bdab7d;font-family:'Gowun Batang',serif}.intro-wing.left{transform:rotate(-7deg)}.intro-wing.right{transform:rotate(7deg)}.orbit-label{font:9px Georgia,serif;letter-spacing:.17em}.satellite-card{width:145px;height:205px;border:1px solid #ac925a;padding:16px;background:#30423788;outline:1px solid #a68d5133;outline-offset:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;box-shadow:0 12px 32px #0003}.satellite-card>span{font:64px Georgia,serif}.satellite-card small{font-size:11px;letter-spacing:.1em}.intro-wing p{font-size:12px;line-height:1.8}.wing-star{font-size:24px}.intro .i-sub{margin-top:0;font-size:15px}.intro .prompt{min-height:48px;padding:9px 14px}.intro .i-cta{margin-top:4px;padding:12px 28px}.intro .i-hint{font-size:11px}.intro .i-feats{gap:12px}.intro .i-feats .tag{padding:5px 13px}.research-deck{background:radial-gradient(ellipse,#bda36633,transparent 70%);position:relative}.research-deck::before,.research-deck::after{content:'✦';position:absolute;top:5px;font-size:26px;color:#927344}.research-deck::before{left:20%}.research-deck::after{right:20%}.topic-option{background-image:radial-gradient(circle at 95% 10%,#c1a56122,transparent 60%)}
+@keyframes celestial-turn{to{transform:rotate(360deg)}}
+@media(max-width:700px){.intro{padding:24px 18px}.tarot-theatre{grid-template-columns:1fr;min-height:345px;gap:0}.summon-stage{min-width:0;height:345px;width:100%;max-width:400px;justify-self:center}.hero-tarot{width:210px;height:310px}.intro-wing{position:absolute;z-index:0;gap:0;opacity:.35;pointer-events:none;top:70px}.intro-wing.left{left:-58px;transform:rotate(-18deg)}.intro-wing.right{right:-58px;transform:rotate(18deg)}.intro-wing p,.intro-wing .orbit-label,.intro-wing .wing-star{display:none}.satellite-card{width:120px;height:195px}.celestial-ring{width:295px;height:295px}.intro .i-sub{font-size:13px;max-width:300px}.intro-in{gap:13px}.face-title{font-size:15px}.card-medallion{height:150px;width:125px;font-size:76px}.intro-kicker{font-size:8px}.intro .i-live{font-size:12px}.intro .i-hint{max-width:260px;line-height:1.7}.intro .i-feats{gap:5px}.intro .i-feats .tag{font-size:9px;padding:4px 7px}}
+@media(prefers-reduced-motion:reduce){.celestial-ring{animation:none}.hero-tarot{opacity:1;transform:none}.flip-inner{transition:none}}
+</style><style id="candlelight">
+.i-sub,.i-hint{word-break:keep-all}.candle{position:absolute;bottom:8px;width:44px;height:105px;z-index:4;pointer-events:none;filter:drop-shadow(0 8px 8px #0005)}.candle-left{left:-24px}.candle-right{right:-24px;transform:scale(.82);transform-origin:bottom}.wax{position:absolute;bottom:10px;left:9px;width:28px;height:60px;background:linear-gradient(90deg,#b69b65,#eed7a0 40%,#c5a875);border-radius:50% 50% 4px 4px / 6px 6px 4px 4px;box-shadow:inset 0 5px 5px #fff0b7}.wax::after{content:'';position:absolute;top:5px;left:5px;width:5px;height:20px;border-radius:0 0 5px 5px;background:#f4dca4}.wick{position:absolute;bottom:68px;left:22px;width:2px;height:9px;background:#3c2a1a;z-index:2}.flame{position:absolute;bottom:75px;left:15px;width:16px;height:35px;border-radius:65% 35% 55% 45% / 75% 70% 30% 25%;background:radial-gradient(ellipse at 50% 80%,#fffce0 0 18%,#ffe49a 35%,#f3ad48 60%,#d87e2722 85%);box-shadow:0 0 12px #ffc45a99;transform-origin:50% 100%;animation:flame-dance 2.1s ease-in-out infinite alternate;z-index:3}.candle-right .flame{animation-duration:2.7s;animation-delay:-1.3s}.candle-glow{position:absolute;width:180px;height:180px;left:-67px;bottom:8px;background:radial-gradient(ellipse,#ffbd4d25,transparent 68%);animation:candle-breathe 3.5s ease-in-out infinite alternate;mix-blend-mode:screen}.holder{position:absolute;bottom:0;left:0;width:44px;height:15px;border-radius:50%;background:linear-gradient(#96763b,#ccb679 35%,#6b512a 70%);border-bottom:3px solid #473821}
+@keyframes flame-dance{0%{transform:rotate(-5deg) scale(1,.93);opacity:.9}30%{transform:rotate(3deg) scale(.93,1.08)}65%{transform:rotate(-2deg) scale(1.05,.97);opacity:1}100%{transform:rotate(6deg) scale(.9,1.05)}}
+@keyframes candle-breathe{from{opacity:.6;transform:scale(.92)}to{opacity:1;transform:scale(1.12)}}
+@media(max-width:700px){.candle-left{left:8px;bottom:8px;transform:scale(.62);transform-origin:bottom}.candle-right{right:8px;bottom:8px;transform:scale(.52)}.intro .i-hint{max-width:320px}}
+@media(prefers-reduced-motion:reduce){.flame,.candle-glow{animation:none}}
 </style></head><body><div class="intro" id="intro" role="dialog" aria-modal="true" aria-label="AI-e랩 연구 여정 시작" hidden></div>
 <div class="app-bg" aria-hidden="true"><div class="aurora"><i></i><i></i><i></i></div><div class="grain"></div></div>
 <header class="top"><div class="top-in"><div class="brand"><i class="dot" aria-hidden="true"></i><h1><button class="brand-btn" id="brandBtn" aria-label="입자 시작 화면 다시 보기">AI-e랩 연구 여정</button></h1><span>AI융합교육대학원 · 나의 결, 우리의 겹</span></div></div></header>
@@ -1446,18 +1457,18 @@ render();
 function startParticles(){
   cancelAnimationFrame(introRAF);
   const cv=bySelector('#pcv');if(!cv)return;const dpr=Math.min(2,window.devicePixelRatio||1);
-  const W=Math.min(760,cv.parentElement.clientWidth),H=Math.round(W*(W<500?.42:.3));
+  const W=cv.parentElement.clientWidth,H=cv.parentElement.clientHeight;
   cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';
   const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
   const off=document.createElement('canvas');off.width=W;off.height=H;const o=off.getContext('2d',{willReadFrequently:true});
-  let fs=H*.78;o.font=`${fs}px "Do Hyeon"`;const t1='AI-e ',t2='LAB';
-  const tw=o.measureText(t1+t2).width;if(tw>W*.94){fs*=W*.94/tw;o.font=`${fs}px "Do Hyeon"`}
-  const w1=o.measureText(t1).width,w2=o.measureText(t2).width,x0=(W-w1-w2)/2;
-  o.textBaseline='middle';o.fillStyle='#f00';o.fillText(t1,x0,H/2+fs*.04);o.fillStyle='#0f0';o.fillText(t2,x0+w1,H/2+fs*.04);
+  const cw=$('heroTarot').offsetWidth,ch=$('heroTarot').offsetHeight,left=(W-cw)/2,top=(H-ch)/2;
+  o.strokeStyle='#f00';o.lineWidth=3;o.strokeRect(left,top,cw,ch);o.strokeRect(left+10,top+10,cw-20,ch-20);
+  o.strokeStyle='#0f0';o.beginPath();o.ellipse(W/2,H/2,cw*.3,ch*.3,0,0,Math.PI*2);o.stroke();
+  o.font='72px Georgia';o.fillStyle='#0f0';o.textAlign='center';o.textBaseline='middle';o.fillText('✦',W/2,H/2);
   const d=o.getImageData(0,0,W,H).data,step=Math.max(3,Math.round(W/230)),P=[];
   for(let y=0;y<H;y+=step)for(let x=0;x<W;x+=step){const i=(y*W+x)*4;if(d[i+3]>140){const teal=d[i+1]>d[i];
     const a=Math.random()*Math.PI*2,r=W*.25+Math.random()*W*.6;
-    P.push({tx:x,ty:y,x:W/2+Math.cos(a)*r,y:H/2+Math.sin(a)*r*.6,vx:0,vy:0,teal,s:Math.random()<.15?2.2:1.6,tw:Math.random()*6})}}
+    P.push({tx:x,ty:y,x:Math.cos(a)>0?W+40:-40,y:H/2+Math.sin(a)*H,vx:0,vy:0,teal,s:Math.random()<.15?2.2:1.6,tw:Math.random()*6})}}
   const still=reduced();if(still)P.forEach(p=>{p.x=p.tx;p.y=p.ty});
   let mx=-999,my=-999,t0=performance.now();
   const host=bySelector('#intro');
@@ -1479,8 +1490,8 @@ function startParticles(){
       }
     }
     const tw=now/600;
-    g.fillStyle='#F3DEAD';for(const p of P)if(!p.teal){g.globalAlpha=.72+.28*Math.sin(tw+p.tw);g.fillRect(p.x,p.y,p.s,p.s)}
-    g.fillStyle='#C7A55B';for(const p of P)if(p.teal){g.globalAlpha=.8+.2*Math.sin(tw+p.tw);g.fillRect(p.x,p.y,p.s,p.s)}
+    g.fillStyle='#F3DEAD';for(const p of P)if(!p.teal){g.globalAlpha=.72+.28*Math.sin(tw+p.tw);g.fillRect(p.x,p.y,p.s*1.4,p.s*2.2)}
+    g.fillStyle='#C7A55B';for(const p of P)if(p.teal){g.globalAlpha=.8+.2*Math.sin(tw+p.tw);g.fillRect(p.x,p.y,p.s*1.4,p.s*2.2)}
     g.globalAlpha=1;
     if(!still)introRAF=requestAnimationFrame(frame);
   };
@@ -1525,18 +1536,31 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 let introRAF=null,introTimers=[],introOff=null;
 const PROMPTS=['20개 연구회 중 나와 만날 연구 카드 뽑기','대학원에서 시작된 질문을 교실로 이어 보기','학생의 목소리와 배움의 변화 따라가기','12개의 질문으로 나의 연구 성향 발견하기','새로운 연구와 동료의 교실로 연결하기'];
 function openIntro(){
- clearIntroFx();const host=$('intro');host.classList.remove('out');host.hidden=false;
+ clearIntroFx();const host=$('intro');host.classList.remove('out','assembled');host.hidden=false;
  document.querySelector('main').inert=true;document.querySelector('header').inert=true;document.body.style.overflow='hidden';
  host.innerHTML=`<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
  <div class="intro-in"><p class="intro-kicker">THE RESEARCHER’S JOURNEY · MMXXVI</p><p class="i-live"><span class="live-dot"></span>AI융합교육대학원 · 나의 결, 우리의 겹</p>
- <div class="intro-emblem" aria-hidden="true">☼</div><canvas id="pcv" role="img" aria-label="AI-e LAB"></canvas><p class="i-sub" id="iSub">대학원에서 시작된 질문, 교실에서 만나 다시 이어지다</p>
+ <div class="tarot-theatre">
+ <aside class="intro-wing left" aria-hidden="true"><span class="orbit-label">I · THE QUESTION</span><div class="satellite-card"><span>☾</span><small>질문의 시작</small></div><p>하나의 질문이<br>새로운 수업이 되는 곳</p><span class="wing-star">✧</span></aside>
+ <div class="summon-stage"><div class="candle candle-left" aria-hidden="true"><i class="candle-glow"></i><i class="flame"></i><i class="wick"></i><i class="wax"></i><i class="holder"></i></div><div class="candle candle-right" aria-hidden="true"><i class="candle-glow"></i><i class="flame"></i><i class="wick"></i><i class="wax"></i><i class="holder"></i></div><div class="celestial-ring" aria-hidden="true"></div><canvas id="pcv" aria-hidden="true"></canvas>
+ <button class="hero-tarot" id="heroTarot" aria-label="타로 카드 뒤집기" aria-pressed="false"><span class="flip-inner">
+ <span class="tarot-face tarot-back"><span class="face-number">✦ &nbsp; MMXXVI &nbsp; ✦</span><span class="card-medallion">☼</span><span class="face-title">THE RESEARCHER</span><span class="face-foot">질문을 품은 당신에게</span></span>
+ <span class="tarot-face tarot-front"><span class="face-number">나의 결, 우리의 겹</span><span class="card-medallion">✧</span><span class="face-title">AI-e LAB</span><span class="face-korean">당신의 다음 연구는<br>어디에서 시작될까요?</span><span class="face-foot">TURN A CARD · BEGIN A JOURNEY</span></span>
+ </span></button></div>
+ <aside class="intro-wing right" aria-hidden="true"><span class="orbit-label">II · THE DISCOVERY</span><div class="satellite-card"><span>✹</span><small>배움의 발견</small></div><p>교사의 탐구가<br>학생의 배움으로 이어지다</p><span class="wing-star">✦</span></aside>
+ </div><p class="i-sub" id="iSub">대학원에서 시작된 질문, 교실에서 만나 다시 이어지다</p>
  <div class="prompt"><span class="p-spark" aria-hidden="true">✦</span><span class="p-line"><span class="p-text" id="pText"></span><span class="caret"></span></span><span class="p-send" aria-hidden="true">→</span></div>
  <button class="i-cta" id="introGo">${S.card?'연구 여정 이어 보기':'연구 여정 시작하기'} <span aria-hidden="true">→</span></button>
- <p class="i-hint">글자 위를 손가락이나 마우스로 쓸어 보세요</p>
+ <p class="i-hint">카드에 마우스를 올려 보세요 · 모바일에서는 눌러서 뒤집기</p>
  <div class="i-feats"><span class="tag">20개 연구회</span><span class="tag">6단계 연구 여정</span><span class="tag">나의 연구 MBTI</span></div></div>`;
+ const flip=$('heroTarot');let pinned=false;
+ const showFlip=on=>{flip.classList.toggle('flipped',on);flip.setAttribute('aria-pressed',String(on));};
+ flip.onpointerenter=e=>{if(e.pointerType==='mouse')showFlip(true)};
+ flip.onpointerleave=e=>{if(e.pointerType==='mouse')showFlip(pinned)};
+ flip.onclick=()=>{pinned=!pinned;showFlip(pinned)};
  $('introGo').onclick=closeIntro;$('introGo').focus();typeLoop();
  const ready=document.fonts?.load('60px "Do Hyeon"')||Promise.resolve();
- Promise.race([ready,new Promise(r=>setTimeout(r,900))]).then(()=>{if(host.hidden)return;startParticles();decodeText($('iSub'),'대학원에서 시작된 질문, 교실에서 만나 다시 이어지다')});
+ Promise.race([ready,new Promise(r=>setTimeout(r,900))]).then(()=>{if(host.hidden)return;startParticles();introTimers.push(setTimeout(()=>host.classList.add('assembled'),reduced()?0:2200));decodeText($('iSub'),'대학원에서 시작된 질문, 교실에서 만나 다시 이어지다')});
 }
 function closeIntro(){
  const host=$('intro');const finish=()=>{clearIntroFx();host.hidden=true;host.innerHTML='';document.body.style.overflow='';document.querySelector('main').inert=false;document.querySelector('header').inert=false;$('stage').focus({preventScroll:true});};
