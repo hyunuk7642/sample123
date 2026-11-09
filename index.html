@@ -1373,6 +1373,11 @@ body{background:#112c3e url('assets/christmas-atrium.png') center/cover fixed}.a
  :root .scale .answer{min-height:72px;padding:10px;font-size:11px;gap:7px}.answer strong{font-size:15px}.answer-star{font-size:20px}
  #stage[data-screen="result"]{grid-template-columns:1fr;gap:18px}#stage[data-screen="result"]>.card.stack{padding:18px;gap:18px}
 }
+</style><style id="scroll-scene-depth">
+.intro{background:#10293c;isolation:isolate}
+.scene-backdrop{position:fixed;inset:-2%;z-index:-1;pointer-events:none;background:linear-gradient(#071c2b55,#061d2e77),url('assets/christmas-atrium.png') center/cover no-repeat;transform-origin:50% 52%;will-change:transform}
+@media(max-width:700px){.scene-backdrop{background-position:57% center}}
+@media(prefers-reduced-motion:reduce){.scene-backdrop{transform:none!important;will-change:auto}}
 </style></head><body><div class="intro" id="intro" role="dialog" aria-modal="true" aria-label="AI-e랩 연구 여정 시작" hidden></div>
 <div class="app-bg" aria-hidden="true"><div class="aurora"><i></i><i></i><i></i></div><div class="grain"></div></div>
 <header class="top"><div class="top-in"><div class="brand"><i class="dot" aria-hidden="true"></i><h1><button class="brand-btn" id="brandBtn" aria-label="입자 시작 화면 다시 보기">AI-e랩 연구 여정</button></h1><span>AI융합교육대학원 · 나의 결, 우리의 겹</span></div></div></header>
@@ -1631,7 +1636,7 @@ function typeLoop(){
  introTimers.push(setTimeout(()=>{if(el.isConnected)el.classList.add('dissolving');},3500));
  introTimers.push(setTimeout(()=>{index=(index+1)%PROMPTS.length;cycle();},5500));};cycle();
 }
-function clearIntroFx(){stopWinter();cancelAnimationFrame(introRAF);introTimers.forEach(t=>{clearTimeout(t);clearInterval(t)});introTimers=[];introOff&&introOff();introOff=null}
+function clearIntroFx(){stopSceneDepth();stopWinter();cancelAnimationFrame(introRAF);introTimers.forEach(t=>{clearTimeout(t);clearInterval(t)});introTimers=[];introOff&&introOff();introOff=null}
 
 const bySelector=s=>document.querySelector(s);
 const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1657,10 +1662,40 @@ function startWinter(){
  winterRAF=requestAnimationFrame(frame);};
  updateSnow();winterRAF=requestAnimationFrame(frame);
 }
+// Scroll changes only the background camera; controls retain their size and position.
+let sceneStop=null;
+function stopSceneDepth(){if(sceneStop)sceneStop();sceneStop=null;}
+function startSceneDepth(){
+ stopSceneDepth();const host=$('intro'),layer=host.querySelector('.scene-backdrop');
+ const preference=matchMedia('(prefers-reduced-motion: reduce)');
+ let current=0,target=0,raf=null,last=0,touchY=null;
+ const scrollable=()=>host.scrollHeight-host.clientHeight>2;
+ const paint=()=>{layer.style.transform=`scale(${1+current*.22})`;};
+ const frame=now=>{const dt=Math.max(0,(now-(last||now-16))/1000);last=now;
+ current+=(target-current)*(1-Math.exp(-dt*8));paint();
+ if(Math.abs(target-current)>.0005)raf=requestAnimationFrame(frame);else{current=target;paint();raf=null;last=0;}};
+ const aim=value=>{if(preference.matches)return;target=Math.max(0,Math.min(1,value));if(raf===null)raf=requestAnimationFrame(frame);};
+ const wheel=e=>{if(e.ctrlKey||preference.matches||scrollable())return;
+ const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?host.clientHeight:1);aim(target+delta/1200);};
+ const scroll=()=>{if(scrollable())aim(host.scrollTop/(host.scrollHeight-host.clientHeight));};
+ const touchStart=e=>{touchY=e.touches.length===1?e.touches[0].clientY:null;};
+ const touchMove=e=>{if(e.touches.length!==1){touchY=null;return;}const y=e.touches[0].clientY;
+ if(touchY!==null&&!scrollable())aim(target+(touchY-y)/650);touchY=y;};
+ const touchEnd=()=>{touchY=null;};
+ const key=e=>{if(e.ctrlKey||e.altKey||e.metaKey||scrollable()||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+ if(e.key==='ArrowDown'||e.key==='PageDown')aim(target+.12);
+ if(e.key==='ArrowUp'||e.key==='PageUp')aim(target-.12);
+ if(e.key==='Home')aim(0);if(e.key==='End')aim(1);};
+ const motionChange=()=>{if(preference.matches){cancelAnimationFrame(raf);raf=null;current=target=0;paint();}};
+ host.addEventListener('wheel',wheel,{passive:true});host.addEventListener('scroll',scroll,{passive:true});
+ host.addEventListener('touchstart',touchStart,{passive:true});host.addEventListener('touchmove',touchMove,{passive:true});host.addEventListener('touchend',touchEnd,{passive:true});host.addEventListener('touchcancel',touchEnd,{passive:true});host.addEventListener('keydown',key);
+ preference.addEventListener('change',motionChange);paint();scroll();
+ sceneStop=()=>{cancelAnimationFrame(raf);host.removeEventListener('wheel',wheel);host.removeEventListener('scroll',scroll);host.removeEventListener('touchstart',touchStart);host.removeEventListener('touchmove',touchMove);host.removeEventListener('touchend',touchEnd);host.removeEventListener('touchcancel',touchEnd);host.removeEventListener('keydown',key);preference.removeEventListener('change',motionChange);};
+}
 function openIntro(){
  clearIntroFx();const host=$('intro');host.classList.remove('out','assembled');host.hidden=false;
  document.querySelector('main').inert=true;document.querySelector('header').inert=true;document.body.style.overflow='hidden';
- host.innerHTML=`<canvas id="snowfall" aria-hidden="true"></canvas><div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
+ host.innerHTML=`<div class="scene-backdrop" aria-hidden="true"></div><canvas id="snowfall" aria-hidden="true"></canvas><div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="grain" aria-hidden="true"></div>
  <div class="intro-in"><p class="intro-kicker">THE RESEARCHER’S JOURNEY · MMXXVI</p><p class="i-live"><span class="live-dot"></span>AI융합교육대학원 · 나의 결, 우리의 겹</p>
  <div class="tarot-theatre">
  <aside class="intro-wing left"><span class="orbit-label">I · THE QUESTION</span><button class="satellite-card winter-card" aria-label="질문의 시작 카드 뒤집기" aria-pressed="false"><span class="satellite-inner"><span class="satellite-face"><span class="satellite-symbol">☾</span><small>질문의 시작</small></span><span class="satellite-face satellite-reverse"><span class="satellite-symbol">✧</span><small>어떤 질문이<br>내 교실을 바꿀까요?</small></span></span></button><p>하나의 질문이<br>새로운 수업이 되는 곳</p><span class="wing-star">✧</span></aside>
@@ -1673,7 +1708,7 @@ function openIntro(){
  </div><p class="i-sub" id="iSub">대학원에서 시작된 질문, 교실에서 만나 다시 이어지다</p>
  <div class="prompt"><span class="p-spark" aria-hidden="true">✦</span><span class="p-line"><span class="p-text" id="pText"></span><span class="caret"></span></span><span class="p-send" aria-hidden="true">→</span></div>
  <button class="i-cta" id="introGo">${S.card?'연구 여정 이어 보기':'연구 여정 시작하기'} <span aria-hidden="true">→</span></button>
- <p class="i-hint">카드에 마우스를 올려 보세요 · 모바일에서는 눌러서 뒤집기</p>
+ <p class="i-hint">카드는 마우스·터치로 뒤집기 · 스크롤하면 배경 속으로</p>
  <div class="i-feats"><span class="tag">20개 연구회</span><span class="tag">6단계 연구 여정</span><span class="tag">나의 연구 MBTI</span></div></div>`;
  const flip=$('heroTarot');let pinned=false;
  const showFlip=on=>{flip.classList.toggle('flipped',on);flip.setAttribute('aria-pressed',String(on));};
@@ -1693,6 +1728,7 @@ function openIntro(){
  }};card.addEventListener('pointermove',brush);card.addEventListener('pointerdown',brush);
  });
  startWinter();
+ startSceneDepth();
  $('introGo').onclick=closeIntro;$('introGo').focus();typeLoop();
  const ready=document.fonts?.load('60px "Do Hyeon"')||Promise.resolve();
  Promise.race([ready,new Promise(r=>setTimeout(r,900))]).then(()=>{if(host.hidden)return;startParticles();introTimers.push(setTimeout(()=>host.classList.add('assembled'),reduced()?0:2200));decodeText($('iSub'),'대학원에서 시작된 질문, 교실에서 만나 다시 이어지다')});
