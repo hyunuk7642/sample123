@@ -202,7 +202,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
   background:radial-gradient(circle at 50% 50%,rgba(234,205,130,.25) 0,transparent 38%),repeating-conic-gradient(from 0deg at 50% 50%,#174A3A 0 11.25deg,#103A2D 0 22.5deg);
   box-shadow:0 10px 26px rgba(0,0,0,.35);transform:rotate(var(--r)) translateY(var(--y));transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s;transform-origin:50% 100%}
 .deck button::before{content:"";position:absolute;inset:6px;border:1px solid var(--gold-light);border-radius:6px;opacity:.6}
-.deck button::after{content:"✦";position:absolute;inset:0;display:grid;place-items:center;color:var(--gold-light);font-size:26px;text-shadow:0 0 12px var(--candle)}
+.deck button::after{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 8l8 34 34 8-34 8-8 34-8-34-34-8 34-8z' fill='%23EBD59B'/%3E%3C/svg%3E") center/32% no-repeat;filter:drop-shadow(0 0 10px var(--candle))}
 .deck button:first-child{margin-left:0}
 .deck button:hover,.deck button:focus-visible{transform:rotate(var(--r)) translateY(calc(var(--y) - 22px)) scale(1.04);box-shadow:0 22px 40px rgba(0,0,0,.4);z-index:2}
 
