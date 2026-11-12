@@ -7,7 +7,7 @@
 <meta name="description" content="AI융합교육대학원 교사연구회 20곳의 연구 여정을 타로 카드처럼 뽑아 따라가고, 나의 연구 성향을 확인하는 체험 웹앱">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Black+Han+Sans&family=Nanum+Pen+Script&display=swap">
 <style>
 /* ============================================================
    디자인 원칙
@@ -59,6 +59,15 @@ p{margin:0}
 img{max-width:100%}
 .mono{font-family:var(--f-mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- 오프닝 쇼릴 (어트랙트 루프) ---------- */
+#reel{position:fixed;inset:0;z-index:11;background:#F4ECDD;cursor:pointer;transition:opacity .5s ease}
+#reel.out{opacity:0;pointer-events:none}
+#reelc{position:absolute;inset:0;width:100%;height:100%;display:block}
+#reel .hint{position:absolute;left:max(18px,env(safe-area-inset-left));top:max(14px,env(safe-area-inset-top));font-family:var(--f-mono);font-size:12px;letter-spacing:.18em;padding:7px 12px;border-radius:999px;
+  border:1px solid rgba(30,42,35,.3);color:#1E2A23;background:rgba(255,255,255,.45);pointer-events:none;transition:color .4s,border-color .4s,background .4s}
+#reel.dark .hint{color:#F3EEDF;border-color:rgba(243,238,223,.35);background:rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:reduce){#reel{display:none}}
 
 /* ---------- 눈 ---------- */
 #snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
@@ -387,6 +396,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 </head>
 <body>
 <canvas id="snow" aria-hidden="true"></canvas>
+<section id="reel" aria-label="오프닝 영상. 화면을 누르면 바로 시작합니다" hidden><canvas id="reelc"></canvas><span class="hint">TAP · 화면을 누르면 바로 시작</span></section>
 
 <!-- ============ 인트로 ============ -->
 <section class="intro" id="intro" aria-label="AI-E랩 연구 여정 시작">
@@ -902,10 +912,210 @@ if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
 /* ============================================================
    무입력 복귀: 3분 동안 입력이 없으면 시작 화면으로 (전시 자율 체험용)
    ============================================================ */
-const IDLE_MS=180000;let idle=0;
-function armIdle(){clearTimeout(idle);idle=setTimeout(()=>{if($("app").hidden===false)backToIntro();},IDLE_MS);}
+/* 본 화면은 3분, 시작 화면은 1분 동안 입력이 없으면 오프닝 쇼릴이 반복 재생됩니다(어트랙트 모드). 어디든 누르면 시작 화면으로. */
+let idle=0;
+function armIdle(){clearTimeout(idle);if(reel.on)return;
+  const ms=$("app").hidden===false?180000:60000;
+  idle=setTimeout(()=>{if($("app").hidden===false)backToIntro();startReel(true);},ms);}
 ["pointerdown","keydown","touchstart","scroll"].forEach(e=>addEventListener(e,armIdle,{passive:true}));
-armIdle();
+
+/* ============================================================
+   오프닝 쇼릴: 캔버스 한 장 위에서 모든 장면을 시간 t의 함수로 그립니다.
+   13초 · 7장면 · 밝은 양피지와 어두운 소나무 장면이 번갈아 나옵니다.
+   ============================================================ */
+const reel={on:false,loop:false,t0:0,raf:0,T:13,W:0,H:0,u:1,ctx:null};
+const RP={paper:"#F4ECDD",pine:"#0C2B1F",ink:"#1E2A23",berry:"#A21F32",gold:"#C49A3C",candle:"#F6C97E",green:"#154431",cream:"#F3EEDF",muted:"#6B766D",goldL:"#EBD59B"};
+const CH=[["별",0],["질문",2],["결·겹",4],["연구",5.6],["스물",7.6],["입학",9.6],["제목",11.6]];
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const eo=t=>1-Math.pow(1-clamp(t),3), ei=t=>Math.pow(clamp(t),3), eio=t=>{t=clamp(t);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+const eback=t=>{t=clamp(t);const c=1.70158,c3=c+1;return 1+c3*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
+const fD=(px,fam="Black Han Sans")=>`${px}px "${fam}","Gowun Batang",sans-serif`;
+const fH=px=>`${px}px "Nanum Pen Script","Gowun Batang",cursive`;
+const fM=px=>`${px}px "IBM Plex Mono",monospace`;
+function sizeReel(){const c=$("reelc"),d=devicePixelRatio||1;reel.W=innerWidth;reel.H=innerHeight;c.width=reel.W*d;c.height=reel.H*d;reel.ctx=c.getContext("2d");reel.ctx.setTransform(d,0,0,d,0,0);reel.u=Math.min(reel.W,reel.H)/900;}
+function startReel(loop){
+  if(REDUCE||reel.on)return;
+  reel.on=true;reel.loop=loop;reel.wrapped=false;$("reel").hidden=false;$("reel").classList.remove("out");
+  $("intro").hidden=true;document.body.classList.remove("mode-intro");
+  sizeReel();addEventListener("resize",sizeReel);
+  const go=()=>{reel.t0=performance.now();cancelAnimationFrame(reel.raf);reel.raf=requestAnimationFrame(reelFrame);};
+  if(document.fonts&&document.fonts.load){Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"'),document.fonts.load('40px "Nanum Pen Script"')]),new Promise(r=>setTimeout(r,1500))]).then(go);}else go();
+}
+function stopReel(){
+  if(!reel.on)return;reel.on=false;cancelAnimationFrame(reel.raf);removeEventListener("resize",sizeReel);
+  const r=$("reel");r.classList.add("out");
+  $("intro").hidden=false;document.body.classList.add("mode-intro");resetTrio();window.scrollTo({top:0});setSnowDensity(90);
+  setTimeout(()=>{r.hidden=true;},520);armIdle();
+}
+$("reel").addEventListener("pointerdown",e=>{e.stopPropagation();stopReel();});
+function reelFrame(now){
+  if(!reel.on)return;
+  let t=Math.max(0,(now-reel.t0)/1000);
+  if(t>=reel.T){ if(reel.loop){reel.t0=now;t=0;reel.wrapped=true;} else {stopReel();return;} }
+  drawReel(t);reel.raf=requestAnimationFrame(reelFrame);
+}
+/* ---- 공통 그리기 ---- */
+function hand(x,y,txt,col,size,ang=0){const g=reel.ctx;g.save();g.translate(x,y);g.rotate(ang);g.font=fH(size);g.fillStyle=col;g.textAlign="left";g.textBaseline="middle";g.fillText(txt,0,0);g.restore();}
+function arrow(x1,y1,x2,y2,col){const g=reel.ctx;g.save();g.strokeStyle=col;g.fillStyle=col;g.lineWidth=1.6*reel.u;g.lineCap="round";g.beginPath();
+  const mx=(x1+x2)/2+(y2-y1)*.25,my=(y1+y2)/2-(x2-x1)*.25;g.moveTo(x1,y1);g.quadraticCurveTo(mx,my,x2,y2);g.stroke();
+  const a=Math.atan2(y2-my,x2-mx),h=7*reel.u;g.beginPath();g.moveTo(x2,y2);g.lineTo(x2-h*Math.cos(a-.5),y2-h*Math.sin(a-.5));g.lineTo(x2-h*Math.cos(a+.5),y2-h*Math.sin(a+.5));g.closePath();g.fill();g.restore();}
+function chapterBar(t,dark){
+  const g=reel.ctx,{W,H,u}=reel,pad=Math.max(28*u,22),y=H-Math.max(34*u,30)-(parseFloat(getComputedStyle(document.documentElement).paddingBottom)||0);
+  const col=dark?RP.cream:RP.ink,mut=dark?"rgba(243,238,223,.45)":"rgba(30,42,35,.4)";
+  g.save();g.strokeStyle=mut;g.lineWidth=1;g.beginPath();g.moveTo(pad,y);g.lineTo(W-pad,y);g.stroke();
+  const cur=CH.filter(c=>t>=c[1]).length-1;
+  CH.forEach((c,i)=>{const x=pad+(c[1]/reel.T)*(W-2*pad);g.fillStyle=i===cur?col:mut;g.beginPath();g.arc(x,y,2.2,0,Math.PI*2);g.fill();
+    g.font=fM(Math.max(10,10.5*u));g.textAlign="left";g.textBaseline="top";g.fillStyle=i===cur?col:mut;g.fillText(c[0],x+6,y+7);});
+  const px=pad+(t/reel.T)*(W-2*pad);g.fillStyle=col;g.beginPath();g.moveTo(px,y-7);g.lineTo(px-4,y-13);g.lineTo(px+4,y-13);g.closePath();g.fill();
+  const ff=String(Math.floor((t%1)*30)).padStart(2,"0"),ss=String(Math.floor(t)).padStart(2,"0");
+  g.font=fM(Math.max(10,10.5*u));g.textAlign="right";g.textBaseline="top";g.fillStyle=mut;g.fillText(`00:00:${ss}:${ff}`,W-pad,Math.max(16*u,14)+(parseFloat(getComputedStyle(document.documentElement).paddingTop)||0));
+  g.restore();
+}
+function tumbleText(txt,x,y,size,col,s,start,gap,fam,align="center"){
+  /* 글자가 하나씩 떨어져 들어오며 자리를 잡음 (오버슈트 약간, 잔상 2개) */
+  const g=reel.ctx,u=reel.u;g.save();g.font=fD(size,fam);g.textBaseline="alphabetic";g.textAlign="left";
+  const chars=[...txt],ws=chars.map(c=>g.measureText(c).width),tot=ws.reduce((a,b)=>a+b,0);
+  let cx=align==="center"?x-tot/2:x;
+  chars.forEach((c,i)=>{const p=clamp((s-start-i*gap)/.55);if(p<=0){cx+=ws[i];return;}
+    const e=eback(p),dy=(1-e)*-110*u,rot=(1-e)*(i%2?.5:-.5),al=clamp(p*3);
+    for(let k=2;k>=0;k--){const pk=clamp((s-start-i*gap-k*.03)/.55),ek=eback(pk);
+      g.save();g.globalAlpha=al*(k?.16:1);g.translate(cx+ws[i]/2,y);g.rotate((1-ek)*(i%2?.5:-.5));g.translate(0,(1-ek)*-110*u);g.fillStyle=col;g.fillText(c,-ws[i]/2,0);g.restore();}
+    cx+=ws[i];});
+  g.restore();return tot;
+}
+function drawReel(t){
+  const g=reel.ctx,{W,H,u}=reel;
+  let dark=false;
+  if(t<2)scene1(t);else if(t<4)scene2(t-2);else if(t<5.6){dark=true;scene3(t-4);}else if(t<7.6)scene4(t-5.6);
+  else if(t<9.6){dark=true;scene5(t-7.6);}else if(t<11.6){dark=true;scene6(t-9.6);}else scene7(t-11.6);
+  $("reel").classList.toggle("dark",dark);
+  chapterBar(t,dark);
+}
+function bg(c){const g=reel.ctx,{W,H}=reel;g.fillStyle=c;g.fillRect(0,0,W,H);
+  const r=g.createRadialGradient(W/2,H*.4,0,W/2,H*.4,Math.max(W,H)*.75);r.addColorStop(0,"rgba(255,255,255,0)");r.addColorStop(1,c===RP.paper?"rgba(120,100,60,.18)":"rgba(0,0,0,.45)");g.fillStyle=r;g.fillRect(0,0,W,H);}
+/* 1) 크리스마스 볼이 떨어지며 찌그러졌다 늘어남 */
+function ballY(s,ground,A){ if(s<.55)return ground-A*(1-Math.pow(s/.55,2)); if(s<1.25){const p=(s-.55)/.7;return ground-A*.5*4*p*(1-p);} if(s<1.7){const p=(s-1.25)/.45;return ground-A*.22*4*p*(1-p);} const p=(s-1.7)/.3;return ground-A*.08*4*p*(1-p);}
+function scene1(s){
+  const g=reel.ctx,{W,H,u}=reel;bg(RP.paper);
+  const ground=H*.66,A=H*.42,R=26*u,X=s=>W*(.16+.6*s/2);
+  g.strokeStyle="rgba(30,42,35,.55)";g.lineWidth=1.2;g.beginPath();g.moveTo(W*.08,ground+R);g.lineTo(W*.92,ground+R);g.stroke();
+  for(let k=9;k>=1;k--){const sk=s-k*.045;if(sk<0)continue;g.strokeStyle=`rgba(196,154,60,${.35-k*.03})`;g.lineWidth=1.2;g.beginPath();g.arc(X(sk),ballY(sk,ground,A),R*.92,0,Math.PI*2);g.stroke();}
+  const y=ballY(s,ground,A),vy=(ballY(s+.01,ground,A)-ballY(s-.01,ground,A))/.02/H;
+  let sy=1+clamp(Math.abs(vy)*.22,0,.45),sx=1/sy;
+  const hit=[.55,1.25,1.7,2].some(h=>Math.abs(s-h)<.06);if(hit){sx=1.38;sy=.62;}
+  g.save();g.translate(X(s),Math.min(y,ground));g.scale(sx,sy);
+  const gr=g.createRadialGradient(-R*.35,-R*.35,R*.1,0,0,R);gr.addColorStop(0,"#FFE9B5");gr.addColorStop(.5,RP.gold);gr.addColorStop(1,"#8F6B1E");g.fillStyle=gr;g.beginPath();g.arc(0,0,R,0,Math.PI*2);g.fill();
+  g.fillStyle=RP.berry;g.fillRect(-R*.22,-R-6*u,R*.44,7*u);g.restore();
+  if(s>.6){const a=clamp((s-.6)/.3);g.globalAlpha=a;hand(W*.42,H*.33,"천천히, 그리고 톡!",RP.berry,44*u,-.06);arrow(W*.46,H*.37,W*.43,ground-R*2.2,RP.berry);g.globalAlpha=1;}
+  if(s>1.3){const a=clamp((s-1.3)/.3);g.globalAlpha=a;hand(W*.66,H*.5,"찌그러지고 · 늘어나고",RP.ink,38*u,.04);g.globalAlpha=1;}
+  if(s<.25&&reel.wrapped){const r=(1-eo(s/.25))*Math.max(W,H)*1.2+R;const gr2=g.createRadialGradient(X(0),ballY(0,ground,A),0,X(0),ballY(0,ground,A),r);gr2.addColorStop(0,RP.candle);gr2.addColorStop(.6,RP.gold);gr2.addColorStop(1,RP.green);g.fillStyle=gr2;g.beginPath();g.arc(X(0),ballY(0,ground,A),r,0,Math.PI*2);g.fill();}
+}
+/* 2) 큰 글자가 와르르 들어옴: "질문이 수업이 / 된다." */
+function scene2(s){
+  const g=reel.ctx,{W,H,u}=reel;bg(RP.paper);
+  tumbleText("질문이 수업이",W/2,H*.4,70*u,RP.ink,s,.1,.06);
+  const tot=tumbleText("된다",W/2-28*u,H*.62,190*u,RP.ink,s,.5,.08);
+  const ds=clamp((s-.95)/.5),sc=eback(ds);if(ds>0){g.fillStyle=RP.gold;g.beginPath();g.arc(W/2+tot/2-10*u,H*.62-14*u,22*u*sc,0,Math.PI*2);g.fill();}
+  const us=eo((s-1.15)/.4);if(us>0){g.strokeStyle=RP.gold;g.lineWidth=7*u;g.lineCap="round";g.beginPath();g.moveTo(W/2-tot/2-10*u,H*.69);g.lineTo(W/2-tot/2-10*u+(tot+20*u)*us,H*.69+3*u);g.stroke();}
+  if(s>1.4){g.globalAlpha=clamp((s-1.4)/.3);hand(W*.68,H*.33,"글자마다 45ms 엇갈려",RP.berry,38*u,-.05);arrow(W*.7,H*.36,W*.62,H*.42,RP.berry);g.globalAlpha=1;}
+}
+/* 3) 어두운 장면: "결"은 고무처럼 늘어나고, "겹"은 이징 없이 딱 */
+function scene3(s){
+  const g=reel.ctx,{W,H,u}=reel;bg(RP.pine);
+  g.textAlign="center";g.textBaseline="middle";
+  if(s<.8){const k=1+2.2*Math.exp(-4.5*s)*Math.cos(11*s);
+    for(let i=4;i>=0;i--){const kk=1+2.2*Math.exp(-4.5*(s-i*.012))*Math.cos(11*(s-i*.012));g.save();g.globalAlpha=i?.14:1;g.translate(W/2,H*.47);g.scale(Math.max(.2,kk),1/Math.sqrt(Math.max(.2,kk)));g.font=fD(260*u);g.fillStyle=RP.gold;g.fillText("결",0,0);g.restore();}
+    g.globalAlpha=clamp((s-.25)/.25);hand(W*.62,H*.72,"늘어나고 · 탄성",RP.goldL,41*u,0);g.globalAlpha=1;
+  } else {
+    g.save();g.strokeStyle="rgba(217,70,90,.5)";g.lineWidth=1;[W*.36,W*.64].forEach(x=>{g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();});[H*.3,H*.64].forEach(y=>{g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();});g.restore();
+    g.font=fD(260*u);g.fillStyle="#D9465A";g.fillText("겹",W/2,H*.47);
+    hand(W*.6,H*.72,"딱. 이징 없음, 일부러.",RP.cream,41*u,0);
+    if(s>1.2){g.globalAlpha=clamp((s-1.2)/.3);g.font=fD(34*u,"Gowun Batang");g.fillStyle=RP.cream;g.fillText("나의 결, 우리의 겹",W/2,H*.84);g.globalAlpha=1;}
+  }
+}
+/* 4) 연구 곡선: 직선 vs 시행착오를 지나는 S곡선, 12문항 간격 데모 */
+function scene4(s){
+  const g=reel.ctx,{W,H,u}=reel;bg(RP.paper);
+  const bx=W*.12,by=H*.16,bw=W*.52,bh=H*.42;
+  g.save();g.strokeStyle="rgba(30,42,35,.12)";g.lineWidth=1;for(let i=1;i<8;i++){g.beginPath();g.moveTo(bx+bw*i/8,by);g.lineTo(bx+bw*i/8,by+bh);g.stroke();g.beginPath();g.moveTo(bx,by+bh*i/8);g.lineTo(bx+bw,by+bh*i/8);g.stroke();}
+  g.strokeStyle=RP.ink;g.lineWidth=1.5;g.beginPath();g.moveTo(bx,by);g.lineTo(bx,by+bh);g.lineTo(bx+bw,by+bh);g.stroke();
+  g.font=fM(14*u);g.fillStyle=RP.muted;g.textAlign="left";g.textBaseline="top";g.fillText("배움",bx+6,by);g.textAlign="right";g.fillText("시간",bx+bw,by+bh+6);g.restore();
+  const lp=eo(s/.5);if(lp>0){g.save();g.setLineDash([6,5]);g.strokeStyle=RP.berry;g.lineWidth=1.6;g.beginPath();g.moveTo(bx,by+bh);g.lineTo(bx+bw*lp,by+bh-bh*lp);g.stroke();g.restore();
+    if(s>.45){hand(bx+bw*.55,by+bh*.28,"직선 = 그냥 진도",RP.berry,35*u,-.05);}}
+  const cp=eio((s-.4)/1.1);if(cp>0){g.save();g.strokeStyle=RP.green;g.lineWidth=4*u;g.lineCap="round";g.beginPath();
+    const N=120;for(let i=0;i<=N*cp;i++){const x=i/N,y=eio(x);const px=bx+bw*x,py=by+bh-bh*y;i?g.lineTo(px,py):g.moveTo(px,py);}g.stroke();
+    [[.1,"질문"],[.4,"설계"],[.7,"적용"],[.95,"배움"]].forEach(([x,l])=>{if(cp>=x){g.fillStyle=RP.green;g.beginPath();g.arc(bx+bw*x,by+bh-bh*eio(x),5*u,0,Math.PI*2);g.fill();g.font=fM(14*u);g.fillStyle=RP.ink;g.textAlign="center";g.textBaseline="bottom";g.fillText(l,bx+bw*x,by+bh-bh*eio(x)-10*u);}});
+    g.restore();
+    if(cp>.75){g.globalAlpha=clamp((cp-.75)/.2);hand(bx+bw*.62,by+bh*.78,"시행착오를 지나 ✓",RP.green,38*u,-.04);g.globalAlpha=1;}
+    if(cp>=.7){g.globalAlpha=clamp((cp-.7)/.2);hand(W*.7,H*.2,"학생의 한마디",RP.berry,38*u,.05);arrow(W*.71,H*.23,bx+bw*.71,by+bh-bh*eio(.7)-8*u,RP.berry);g.globalAlpha=1;}
+  }
+  /* 12문항 간격 데모 */
+  const ry=H*.74,rx=W*.12,rw=W*.76,n=12,bwid=rw/n;
+  g.save();for(let i=0;i<n;i++){g.strokeStyle="rgba(21,68,49,.45)";g.lineWidth=1.2;g.strokeRect(rx+i*bwid+3,ry-12*u,bwid-6,24*u);}
+  const mp=eio((s-.3)/1.5);g.fillStyle=RP.ink;g.fillRect(rx+mp*(rw-bwid)+3,ry-12*u,bwid-6,24*u);
+  g.font=fM(14*u);g.fillStyle=RP.muted;g.textAlign="left";g.textBaseline="top";g.fillText("12문항 · 같은 간격, 다른 속도",rx,ry+18*u);g.restore();
+}
+/* 5) 점 20개가 꼬리를 끌며 모여 카드가 됨 */
+function pt(i,n){const a=-Math.PI/2+i/n*Math.PI*2;return a;}
+function rrPoint(q,cx,cy,w,h,r){ /* 둥근 사각형 둘레의 점 (q: 0~1, 위쪽 중앙에서 시계 방향) */
+  const per=2*(w+h)-8*r+2*Math.PI*r;let d=q*per;const segs=[["l",w-2*r],["c",Math.PI/2*r],["l",h-2*r],["c",Math.PI/2*r],["l",w-2*r],["c",Math.PI/2*r],["l",h-2*r],["c",Math.PI/2*r]];
+  let x=cx,y=cy-h/2,ang=0;const half=(w-2*r)/2;x=cx-half+0; /* 시작: 위 변 중앙 */
+  d+=half;let X=cx-half,Y=cy-h/2;const corners=[[cx+half,cy-h/2+r],[cx+half,cy+h/2-r],[cx-half,cy+h/2-r],[cx-half,cy-h/2+r]];
+  for(let k=0;k<8;k++){const [ty,len]=segs[k];if(d<=len){
+      if(ty==="l"){const dir=[[1,0],[0,1],[-1,0],[0,-1]][k/2|0];return {x:X+dir[0]*d,y:Y+dir[1]*d};}
+      const c=corners[(k-1)/2|0],a0=-Math.PI/2+((k-1)/2|0)*Math.PI/2,a=a0+d/r;return {x:c[0]+r*Math.cos(a),y:c[1]+r*Math.sin(a)};}
+    d-=len;
+    if(ty==="l"){const dir=[[1,0],[0,1],[-1,0],[0,-1]][k/2|0];X+=dir[0]*len;Y+=dir[1]*len;}
+    else{const c=corners[(k-1)/2|0],a0=-Math.PI/2+((k-1)/2|0)*Math.PI/2+Math.PI/2;X=c[0]+r*Math.cos(a0);Y=c[1]+r*Math.sin(a0);}
+  }
+  return {x:X,y:Y};
+}
+function scene5(s){
+  const g=reel.ctx,{W,H,u}=reel;bg(RP.pine);
+  const sp=30*u;g.fillStyle="rgba(235,213,155,.16)";for(let x=sp/2;x<W;x+=sp)for(let y=sp/2;y<H;y+=sp){g.beginPath();g.arc(x,y,1.3,0,Math.PI*2);g.fill();}
+  const n=20,cx=W/2,cy=H*.46,R=Math.min(W,H)*.2,cw=R*1.5,chh=R*2.25;
+  const morph=eio((s-1.45)/.5);
+  for(let i=0;i<n;i++){
+    const a=pt(i,n),sx=cx+Math.cos(a*1.7+i)*Math.max(W,H)*.8,sy=cy+Math.sin(a*1.3+i*2)*Math.max(W,H)*.8;
+    const ex=cx+R*Math.cos(a),ey=cy+R*Math.sin(a);
+    const rp=rrPoint(i/n,cx,cy,cw,chh,22*u);const tx=ex+(rp.x-ex)*morph,ty=ey+(rp.y-ey)*morph;
+    const mx=(sx+tx)/2-(ty-sy)*.45,my=(sy+ty)/2+(tx-sx)*.45;
+    for(let k=7;k>=0;k--){const p=eo((s-i*.025-k*.035)/1.3);if(p<=0)continue;
+      const x=(1-p)*(1-p)*sx+2*(1-p)*p*mx+p*p*tx,y=(1-p)*(1-p)*sy+2*(1-p)*p*my+p*p*ty;
+      g.fillStyle=k?`rgba(246,201,126,${.5-k*.06})`:RP.candle;g.beginPath();g.arc(x,y,k?4*u*(1-k*.08):6*u,0,Math.PI*2);g.fill();}
+  }
+  if(morph>0){g.save();g.globalAlpha=morph;g.strokeStyle=RP.goldL;g.lineWidth=1.5;g.beginPath();g.roundRect(cx-cw/2+10*u,cy-chh/2+10*u,cw-20*u,chh-20*u,14*u);g.stroke();
+    g.font=fD(90*u,"Gowun Batang");g.fillStyle=RP.goldL;g.textAlign="center";g.textBaseline="middle";g.fillText("✦",cx,cy);g.restore();}
+  if(s>.9){g.globalAlpha=clamp((s-.9)/.3);hand(W*.64,H*.2,"follow-through · 꼬리가 따라옴",RP.goldL,38*u,-.04);g.globalAlpha=1;}
+  if(s>1.6){g.globalAlpha=clamp((s-1.6)/.3);g.font=fM(15*u);g.fillStyle=RP.cream;g.textAlign="center";g.textBaseline="top";g.fillText("20개 교사연구회 · 카드 한 장",cx,cy+chh/2+16*u);g.globalAlpha=1;}
+}
+/* 6) 원형 카운터 0→100% */
+function scene6(s){
+  const g=reel.ctx,{W,H,u}=reel;bg(RP.pine);
+  const cx=W/2,cy=H*.46,R=Math.min(W,H)*.21,p=eio(s/1.5),pct=Math.round(p*100);
+  g.save();g.strokeStyle="rgba(243,238,223,.18)";g.lineWidth=2;g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.stroke();
+  g.strokeStyle=RP.candle;g.lineWidth=3*u;g.lineCap="round";g.beginPath();g.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+Math.PI*2*p);g.stroke();
+  for(let i=0;i<12;i++){const a=-Math.PI/2+i/12*Math.PI*2,x=cx+R*.68*Math.cos(a),y=cy+R*.68*Math.sin(a),on=i<p*12;g.fillStyle=on?RP.candle:"rgba(243,238,223,.25)";g.beginPath();g.arc(x,y,on?5*u:3*u,0,Math.PI*2);g.fill();}
+  const core=R*(.16+.06*Math.sin(s*9));g.fillStyle=RP.gold;g.beginPath();g.arc(cx,cy,core,0,Math.PI*2);g.fill();
+  g.font=fD(44*u);g.fillStyle=RP.cream;g.textAlign="center";g.textBaseline="top";g.fillText(pct+"%",cx,cy+R+18*u);g.restore();
+  [[.3,"20개 연구회",-1],[.6,"12문항",1],[.9,"카드 1장",0]].forEach(([th,l,side],i)=>{if(p>=th){const a=clamp((p-th)/.1);g.globalAlpha=a;g.font=fM(16*u);g.fillStyle=RP.goldL;g.textAlign=side<0?"right":side>0?"left":"center";g.textBaseline="middle";
+    const x=side<0?cx-R-30*u:side>0?cx+R+30*u:cx,y=side?cy-R*.3+i*R*.5:cy-R-30*u;g.fillText(l,x,y);g.globalAlpha=1;}});
+  if(s>.3){g.globalAlpha=clamp((s-.3)/.3);hand(W*.66,H*.72,"anticipation · 입학 준비",RP.goldL,38*u,-.04);g.globalAlpha=1;}
+}
+/* 7) 타이틀, 그리고 황금 점이 화면을 덮으며 시작 화면으로 */
+function scene7(s){
+  const g=reel.ctx,{W,H,u}=reel;bg(RP.paper);
+  const tot=tumbleText("AI-E랩 연구 여정",W/2-20*u,H*.46,112*u,RP.ink,s,.05,.05);
+  const ds=clamp((s-.6)/.4),sc=eback(ds);
+  if(s>.55){g.globalAlpha=clamp((s-.55)/.3);g.font=fD(40*u,"Gowun Batang");g.fillStyle=RP.ink;g.textAlign="center";g.textBaseline="top";g.fillText("나의 결, 우리의 겹",W/2,H*.52);g.globalAlpha=1;}
+  if(s>.85){g.globalAlpha=clamp((s-.85)/.3);g.font=fM(15*u);g.fillStyle=RP.muted;g.textAlign="center";g.textBaseline="top";g.fillText("2026 AI교육 성과주간 · AI융합교육대학원 · 곁",W/2,H*.6);hand(W*.68,H*.34,"open to new questions",RP.berry,35*u,-.05);g.globalAlpha=1;}
+  const dx=W/2-20*u+tot/2+6*u,dy=H*.46-12*u;
+  const fl=ei((s-1.0)/.4);
+  const r=22*u*sc+fl*Math.max(W,H)*1.3;
+  if(ds>0){const gr=g.createRadialGradient(dx,dy,0,dx,dy,Math.max(r,1));gr.addColorStop(0,RP.candle);gr.addColorStop(fl>0?.55:1,RP.gold);gr.addColorStop(1,fl>0?RP.green:RP.gold);g.fillStyle=gr;g.beginPath();g.arc(dx,dy,r,0,Math.PI*2);g.fill();}
+}
+/* 첫 로드: 쇼릴 1회 → 시작 화면. 움직임 줄이기 설정이면 바로 시작 화면. */
+if(!REDUCE){startReel(false);}else{armIdle();}
 </script>
 </body>
 </html>
