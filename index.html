@@ -46,7 +46,7 @@
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.65;
-  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;word-break:keep-all;overflow-wrap:break-word;
   background:
    radial-gradient(ellipse 80% 40% at 50% -5%,rgba(246,201,126,.18),transparent 60%),
    radial-gradient(ellipse 60% 50% at 100% 100%,rgba(162,31,50,.18),transparent 60%),
@@ -74,6 +74,24 @@ body.mode-intro #snow{z-index:6}
   radial-gradient(ellipse 70% 55% at 50% 42%,rgba(8,24,16,0),rgba(8,24,16,.62) 75%),
   linear-gradient(180deg,rgba(6,20,14,.5),rgba(6,20,14,.12) 35%,rgba(6,20,14,.72));pointer-events:none}
 .intro-in{margin:auto}
+/* 포인터를 따라가는 촛불빛 */
+.intro-light{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .7s;mix-blend-mode:screen;
+  background:radial-gradient(circle 340px at var(--lx,50%) var(--ly,45%),rgba(255,224,160,.6),rgba(255,205,120,.22) 45%,transparent 72%)}
+.intro.lit .intro-light{opacity:1;animation:flicker 2.6s ease-in-out infinite}
+@keyframes flicker{0%,100%{filter:brightness(1)}30%{filter:brightness(1.12)}55%{filter:brightness(.92)}80%{filter:brightness(1.06)}}
+/* 빈 곳을 눌렀을 때 퍼지는 빛 고리 */
+.ripple{position:fixed;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;pointer-events:none;z-index:6;
+  border:2px solid rgba(255,230,170,.9);box-shadow:0 0 24px rgba(246,201,126,.8),inset 0 0 18px rgba(246,201,126,.5);animation:ripple 1s ease-out forwards}
+@keyframes ripple{from{transform:scale(.3);opacity:1}to{transform:scale(7);opacity:0}}
+/* 배경 별 반짝임 */
+.spark{position:absolute;width:3px;height:3px;border-radius:50%;background:#FFF2CC;pointer-events:none;opacity:0;
+  box-shadow:0 0 8px 2px rgba(255,235,180,.7);animation:twinkle var(--d,3s) ease-in-out var(--o,0s) infinite}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:.95;transform:scale(1.25)}}
+/* 입장 연출: 요소가 차례로 떠오름 */
+.intro-in>*{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+.intro-in>:nth-child(1){animation-delay:.05s}.intro-in>:nth-child(2){animation-delay:.15s}.intro-in>:nth-child(3){animation-delay:.3s}
+.intro-in>:nth-child(4){animation-delay:.45s}.intro-in>:nth-child(5){animation-delay:.7s}.intro-in>:nth-child(6){animation-delay:.8s}
+.intro-in>:nth-child(7){animation-delay:.9s}.intro-in>:nth-child(8){animation-delay:1s}.intro-in>:nth-child(9){animation-delay:1.1s}
 .intro-frame{position:absolute;inset:12px;border:1px solid rgba(226,196,120,.45);border-radius:6px;pointer-events:none}
 .intro-frame::before,.intro-frame::after{content:"";position:absolute;inset:6px;border:1px solid rgba(226,196,120,.22);border-radius:4px}
 .intro-frame::after{inset:-4px;border-color:rgba(226,196,120,.16)}
@@ -91,10 +109,18 @@ body.mode-intro #snow{z-index:6}
 
 /* 카드 3장 */
 .trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,2.5vw,24px);width:100%;max-width:min(640px,calc((100vh - 470px) * 2.4));min-width:min(100%,300px);margin-top:4px;perspective:1600px}
-.tcard{position:relative;aspect-ratio:2/3;border:0;background:transparent;padding:0;border-radius:14px;transform-style:preserve-3d;
-  transition:transform .8s cubic-bezier(.2,.75,.2,1);transform:rotateY(0) translateY(0)}
-.tcard:hover:not(.on),.tcard:focus-visible:not(.on){transform:translateY(-8px)}
-.tcard.on{transform:rotateY(180deg)}
+.tslot{perspective:1400px;animation:bob 4.6s ease-in-out var(--bd,0s) infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(var(--br,0deg))}}
+.tcard{position:relative;width:100%;aspect-ratio:2/3;border:0;background:transparent;padding:0;border-radius:14px;transform-style:preserve-3d;
+  transition:transform .8s cubic-bezier(.2,.75,.2,1);--flip:0deg;--tx:0deg;--ty:0deg;--lift:0px;
+  transform:translateY(var(--lift)) rotateX(var(--tx)) rotateY(calc(var(--ty) + var(--flip)))}
+.tcard.tilting{transition:transform .18s ease-out}
+.tcard:hover:not(.on),.tcard:focus-visible:not(.on){--lift:-10px}
+.tcard.on{--flip:180deg}
+.tcard.on .face .halo{animation:halo 1.4s ease-out}
+@keyframes halo{0%{opacity:0;transform:scale(.6)}40%{opacity:1;transform:scale(1.3)}100%{opacity:1;transform:none}}
+.tcard .back svg{animation:spin 24s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .tcard>i{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;
   box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.25)}
 .tcard .face{transform:rotateY(180deg);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:7%;
@@ -106,6 +132,7 @@ body.mode-intro #snow{z-index:6}
 .tcard .sym svg{width:100%;height:100%;overflow:visible}
 .tcard .name{position:relative;z-index:1;font-family:var(--f-display);font-weight:700;font-size:clamp(14px,2.2vw,22px);letter-spacing:.06em}
 .tcard .name small{display:block;font-family:var(--f-mono);font-weight:400;font-size:clamp(9px,1.1vw,11px);letter-spacing:.2em;opacity:.8;margin-top:4px}
+@media (max-width:600px){.tcard .num .d,.tcard .name small{display:none}.tcard .num{font-size:10px}.tcard .sym{width:50%}.tcard .face{padding:9% 6%}}
 .tcard .face .halo{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(255,235,180,.22),transparent 55%);pointer-events:none}
 .tcard .back{background:
   radial-gradient(circle at 50% 50%,rgba(234,205,130,.22) 0,transparent 36%),
@@ -126,6 +153,13 @@ body.mode-intro #snow{z-index:6}
   box-shadow:0 12px 36px rgba(120,20,35,.55),inset 0 1px 0 rgba(255,255,255,.2);transition:transform .25s,opacity .35s,filter .25s}
 .enter:hover{transform:translateY(-2px);filter:brightness(1.07)}
 .enter[aria-disabled="true"]{opacity:.42;filter:saturate(.4);cursor:not-allowed;transform:none}
+.enter[aria-disabled="false"]{animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 12px 36px rgba(120,20,35,.55),0 0 0 0 rgba(246,201,126,.55)}50%{box-shadow:0 12px 44px rgba(120,20,35,.7),0 0 0 14px rgba(246,201,126,0)}}
+.trio-cap .dots i.on{animation:dotpop .5s cubic-bezier(.2,.8,.2,1.4)}
+@keyframes dotpop{from{transform:scale(.2)}to{transform:none}}
+.trio-msg{animation:rise .6s both}
+.lead br.d,.trio-msg br.d{display:none}
+@media (min-width:600px){.lead br.d,.trio-msg br.d{display:inline}}
 .enter .arr{font-family:var(--f-mono);font-size:16px}
 .skip{background:transparent;border:0;color:#CFC7B2;font-size:13px;text-decoration:underline dotted;text-underline-offset:4px;padding:8px}
 .intro-foot{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
@@ -145,7 +179,8 @@ body.mode-intro #snow{z-index:6}
    radial-gradient(circle at 10px 6px,var(--candle) 0 2px,transparent 3px) 0 0/44px 14px repeat-x,
    radial-gradient(circle at 32px 10px,#E8657A 0 2px,transparent 3px) 0 0/44px 14px repeat-x,
    linear-gradient(180deg,transparent 6px,rgba(235,213,155,.5) 6px,rgba(235,213,155,.5) 7px,transparent 7px);
-   opacity:.9}
+   opacity:.9;animation:lights 2.4s ease-in-out infinite}
+@keyframes lights{0%,100%{opacity:.9;filter:brightness(1)}50%{opacity:.7;filter:brightness(1.35)}}
 .top{color:var(--pine-ink);padding:14px 16px 10px}
 .top-in{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px;background:none;border:0;padding:6px 8px 6px 4px;border-radius:10px;color:inherit;text-align:left}
@@ -275,8 +310,8 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 
 /* 움직임 줄이기 */
 @media (prefers-reduced-motion:reduce){
-  .tcard,.tarot-card,.stage,.deck button,#portal.go{animation:none!important;transition:none!important}
-  .tcard.on{transform:rotateY(180deg)}
+  .tcard,.tslot,.tarot-card,.stage,.deck button,#portal.go,.intro-in>*,.intro-light,.enter,.garland,.spark,.ripple,.tcard .back svg,.trio-msg,.trio-cap .dots i{animation:none!important;transition:none!important}
+  .tcard{--tx:0deg!important;--ty:0deg!important}
   #snow{display:none}
 }
 </style>
@@ -286,6 +321,8 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 
 <!-- ============ 인트로 ============ -->
 <section class="intro" id="intro" aria-label="AI-E랩 연구 여정 시작">
+  <div class="intro-light" aria-hidden="true"></div>
+  <div id="sparks" aria-hidden="true"></div>
   <div class="intro-frame" aria-hidden="true"></div>
   <svg class="intro-corner tl" viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M2 52V14q0-12 12-12h38"/><path d="M8 46V18q0-8 8-8h30" opacity=".55"/><path d="M14 8l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="currentColor" stroke="none"/><circle cx="36" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="5" cy="36" r="1.4" fill="currentColor" stroke="none"/></svg>
   <svg class="intro-corner tr" viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M2 52V14q0-12 12-12h38"/><path d="M8 46V18q0-8 8-8h30" opacity=".55"/><path d="M14 8l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="currentColor" stroke="none"/><circle cx="36" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="5" cy="36" r="1.4" fill="currentColor" stroke="none"/></svg>
@@ -295,7 +332,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
   <div class="intro-in">
     <div class="intro-kicker">AI융합교육대학원 · The Researcher's Journey · MMXXVI</div>
     <h1>AI-E랩 연구 여정<small>나의 결, 우리의 겹</small></h1>
-    <p class="intro-lead">대학원에서 시작된 질문이 교실에서 학생을 만나 다시 이어집니다.<br>카드 <b>세 장</b>을 차례로 뒤집고 연구 여정에 입장하세요.</p>
+    <p class="intro-lead">대학원에서 시작된 질문이<br class="d">교실에서 학생을 만나 다시 이어집니다.<br>카드 <b>세 장</b>을 차례로 뒤집고 연구 여정에 입장하세요.</p>
 
     <div class="trio" id="trio" role="group" aria-label="입장 카드 세 장"></div>
 
@@ -434,29 +471,62 @@ const SVG_STAR=`<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" str
 const SVG_BACK=`<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="50" cy="50" r="40" opacity=".55"/><circle cx="50" cy="50" r="30" opacity=".35"/><path d="M50 14l7 26 26 7-26 7-7 26-7-26-26-7 26-7z" fill="currentColor" fill-opacity=".25"/><path d="M50 36l3.5 10.5L64 50l-10.5 3.5L50 64l-3.5-10.5L36 50l10.5-3.5z" fill="currentColor" stroke="none"/></svg>`;
 const TRIO=[
  {n:"I",name:"질문의 시작",en:"The Question",svg:SVG_MOON,cf:"#17483A",ct:"#F3E6B8",
-  msg:"교실에서 막힌 한 장면이 연구의 첫 문장이 됩니다. 선생님의 고민이 질문으로 바뀌는 곳, 융합대학원입니다."},
- {n:"II",name:"나의 결, 우리의 겹",en:"Threads & Layers",svg:SVG_RINGS,cf:"#8E1A2B",ct:"#FBE7C3",
-  msg:"대학원에서 시작된 질문이 교실에서 학생을 만나고, 서로 다른 교실의 결이 겹쳐 하나의 연구가 됩니다."},
+  msg:"교실에서 막힌 한 장면이 연구의 첫 문장이 됩니다.<br class=\"d\">선생님의 고민이 질문으로 바뀌는 곳, 융합대학원입니다."},
+ {n:"II",name:"나의 결,<br>우리의 겹",en:"Threads & Layers",svg:SVG_RINGS,cf:"#8E1A2B",ct:"#FBE7C3",
+  msg:"대학원에서 시작된 질문이 교실에서 학생을 만나고,<br class=\"d\">서로 다른 교실의 결이 겹쳐 하나의 연구가 됩니다."},
  {n:"III",name:"배움의 발견",en:"The Discovery",svg:SVG_STAR,cf:"#1C2E4A",ct:"#F1DFA6",
-  msg:"교사의 탐구는 학생의 배움으로 돌아옵니다. 그 배움이 다음 연구의 질문이 됩니다. 이제 카드를 한 장 뽑아 입학하세요."}
+  msg:"교사의 탐구는 학생의 배움으로 돌아오고,<br class=\"d\">그 배움이 다음 연구의 질문이 됩니다.<br>이제 카드를 한 장 뽑아 입학하세요."}
 ];
+const BOB=["--bd:0s;--br:-1.2deg","--bd:1.4s;--br:0deg","--bd:2.6s;--br:1.2deg"];
 const CAPS=["첫 번째 카드를 뒤집어 보세요","두 번째 카드도 뒤집어 보세요","마지막 카드를 뒤집어 보세요","세 장이 모두 열렸습니다. 입학할 준비가 되었어요"];
 const flipped=new Set();
 const $=id=>document.getElementById(id);
 
 function buildTrio(){
-  $("trio").innerHTML=TRIO.map((c,i)=>`<button class="tcard" data-i="${i}" style="--cf:${c.cf};--ct:${c.ct}" aria-pressed="false" aria-label="${c.n} ${c.name} 카드 뒤집기">
+  $("trio").innerHTML=TRIO.map((c,i)=>`<div class="tslot" style="${BOB[i]}"><button class="tcard" data-i="${i}" style="--cf:${c.cf};--ct:${c.ct}" aria-pressed="false" aria-label="${c.n} ${c.name.replace(/<br>/g," ")} 카드 뒤집기">
     <i class="back" aria-hidden="true">${SVG_BACK}<b>${c.n}</b></i>
-    <i class="face" aria-hidden="true"><span class="halo"></span><span class="num">${c.n} · ${c.en.toUpperCase()}</span><span class="sym">${c.svg}</span><span class="name">${c.name}<small>${c.en}</small></span></i>
-  </button>`).join("");
+    <i class="face" aria-hidden="true"><span class="halo"></span><span class="num">${c.n}<span class="d"> · ${c.en.toUpperCase()}</span></span><span class="sym">${c.svg}</span><span class="name">${c.name}<small>${c.en}</small></span></i>
+  </button></div>`).join("");
   $("trio").querySelectorAll(".tcard").forEach(b=>b.addEventListener("click",()=>flipTrio(+b.dataset.i)));
+  /* 배경 별 반짝임 18개 */
+  $("sparks").innerHTML=Array.from({length:18},()=>`<i class="spark" style="left:${(Math.random()*92+4).toFixed(1)}%;top:${(Math.random()*88+4).toFixed(1)}%;--d:${(2.2+Math.random()*3).toFixed(1)}s;--o:${(Math.random()*4).toFixed(1)}s"></i>`).join("");
 }
+/* ---- 인트로 상호작용: 빛이 포인터를 따라오고, 카드는 포인터 쪽으로 기울고, 빈 곳을 누르면 눈이 쏟아짐 ---- */
+const REDUCE=matchMedia("(prefers-reduced-motion:reduce)").matches;
+const intro=$("intro");let lightOff=0;
+function moveLight(x,y){
+  intro.style.setProperty("--lx",x+"px");intro.style.setProperty("--ly",y+"px");
+  intro.classList.add("lit");clearTimeout(lightOff);lightOff=setTimeout(()=>intro.classList.remove("lit"),1800);
+  if(REDUCE)return;
+  intro.querySelectorAll(".tcard").forEach(b=>{
+    if(Date.now()-(+b.dataset.t||0)<900)return; /* 뒤집히는 중이면 기울이지 않음 */
+    const r=b.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const dx=(x-cx)/r.width,dy=(y-cy)/r.height,near=Math.hypot(dx,dy);
+    const k=Math.max(0,1-near/2.2);
+    b.classList.add("tilting");
+    b.style.setProperty("--ty",(dx*14*k).toFixed(2)+"deg");
+    b.style.setProperty("--tx",(-dy*12*k).toFixed(2)+"deg");
+  });
+}
+function clearTilt(){intro.querySelectorAll(".tcard").forEach(b=>{b.classList.remove("tilting");b.style.setProperty("--tx","0deg");b.style.setProperty("--ty","0deg");});}
+intro.addEventListener("pointermove",e=>moveLight(e.clientX,e.clientY),{passive:true});
+intro.addEventListener("pointerleave",()=>{intro.classList.remove("lit");clearTilt();});
+intro.addEventListener("pointerdown",e=>{
+  moveLight(e.clientX,e.clientY);
+  if(e.target.closest("button"))return;
+  snowBurst(e.clientX,e.clientY);
+  if(REDUCE)return;
+  const r=document.createElement("i");r.className="ripple";r.style.left=e.clientX+"px";r.style.top=e.clientY+"px";
+  document.body.appendChild(r);setTimeout(()=>r.remove(),1000);
+},{passive:true});
+intro.addEventListener("touchend",clearTilt,{passive:true});
 function flipTrio(i){
   const b=$("trio").querySelector(`[data-i="${i}"]`);
   if(b.classList.contains("on"))return;
+  b.classList.remove("tilting");b.style.setProperty("--tx","0deg");b.style.setProperty("--ty","0deg");b.dataset.t=Date.now();
   b.classList.add("on");b.setAttribute("aria-pressed","true");
   flipped.add(i);
-  $("trioMsg").textContent=TRIO[i].msg;
+  const m=$("trioMsg");m.innerHTML=TRIO[i].msg;m.style.animation="none";void m.offsetWidth;m.style.animation="rise .6s both";
   $("dots").children[i].classList.add("on");
   $("capTxt").textContent=CAPS[Math.min(flipped.size,3)];
   if(flipped.size>=1)$("skip").hidden=true;
@@ -466,7 +536,7 @@ function resetTrio(){
   flipped.clear();
   $("trio").querySelectorAll(".tcard").forEach(b=>{b.classList.remove("on");b.setAttribute("aria-pressed","false");});
   [...$("dots").children].forEach(d=>d.classList.remove("on"));
-  $("trioMsg").textContent="";$("capTxt").textContent=CAPS[0];
+  $("trioMsg").innerHTML="";$("trioMsg").style.animation="";$("capTxt").textContent=CAPS[0];clearTilt();
   $("enter").setAttribute("aria-disabled","true");$("skip").hidden=false;
 }
 function enterApp(){
@@ -512,7 +582,7 @@ function render(){
  if(S.step===0){
   if(!c){
    el.innerHTML=`<span class="eyebrow">01 · Enter · 입학</span><h1>연구 사례 카드를 한 장 뽑아 보세요</h1>
-   <p class="lead">카드 한 장이 20개 교사연구회 중 한 곳으로 안내합니다. 어떤 연구를 만날지는 뽑아 봐야 알 수 있습니다. 직접 골랐지만 우연처럼 만나는 연구, 그것이 입학의 시작입니다.</p>
+   <p class="lead">카드 한 장이 20개 교사연구회 중 한 곳으로 안내합니다.<br class="d">어떤 연구를 만날지는 뽑아 봐야 알 수 있습니다.<br class="d">직접 골랐지만 우연처럼 만나는 연구, 그것이 입학의 시작입니다.</p>
    <div class="deck" role="group" aria-label="카드 더미">${[0,1,2,3,4,5,6].map(i=>`<button style="--r:${(i-3)*6}deg;--y:${Math.abs(i-3)*7}px" data-draw="1" aria-label="카드 ${i+1}번 뽑기"></button>`).join("")}</div>
    <p class="note" style="text-align:center">카드를 한 장 눌러 보세요</p>`;
    el.querySelectorAll("[data-draw]").forEach(b=>b.onclick=()=>{S.card=CARDS[Math.floor(Math.random()*CARDS.length)];render();});
@@ -521,7 +591,7 @@ function render(){
    <div class="tarot">${cardHTML(c)}<div class="tarot-body">
      <span class="seal">ADMITTED · 제 ${String(c.id).padStart(2,"0")} 연구회</span>
      <h2>${c.group}</h2><p class="mini">${levelTxt(c)} 소속 교사연구회</p><div>${topicTags(c)}</div>
-     <p class="lead">융합대학원에 입학했습니다. 이 연구회가 어떤 질문으로 시작해 교실에서 무엇을 발견했는지 따라가 보세요.</p>
+     <p class="lead">융합대학원에 입학했습니다.<br class="d">이 연구회가 어떤 질문으로 시작해 교실에서 무엇을 발견했는지 따라가 보세요.</p>
      <div class="row"><button class="btn" id="n">연구 설계 보기 →</button><button class="btn ghost" id="r">카드 다시 뽑기</button></div>
    </div></div>`;
    $("n").onclick=()=>go(1); $("r").onclick=()=>{S.card=null;render();};
@@ -599,13 +669,25 @@ function render(){
 const snow=$("snow"),ctx=snow.getContext("2d");let flakes=[],want=90,raf=0;
 function sizeSnow(){snow.width=innerWidth*devicePixelRatio;snow.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}
 function mkFlake(y){return {x:Math.random()*innerWidth,y:y??-10,r:Math.random()*2.2+.8,v:Math.random()*.6+.35,d:Math.random()*.6-.3,o:Math.random()*.5+.35};}
-function setSnowDensity(n){want=n;}
+let baseWant=90,surge=0;
+function setSnowDensity(n){baseWant=n;want=n;}
+/* 빈 곳을 누르면: 그 자리에서 눈이 터져 흩날리고, 몇 초 동안 눈발이 굵어짐 */
+let bursts=[];
+function snowBurst(x,y){
+  if(REDUCE)return;
+  for(let i=0;i<46;i++){const a=Math.random()*Math.PI*2,s=Math.random()*5+1.5;
+    bursts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2.5,r:Math.random()*2.4+1,o:1,life:0});}
+  want=Math.min(baseWant+140,260);clearTimeout(surge);surge=setTimeout(()=>{want=baseWant;},4500);
+}
 function tickSnow(){
   ctx.clearRect(0,0,innerWidth,innerHeight);
-  while(flakes.length<want)flakes.push(mkFlake(Math.random()*innerHeight));
+  while(flakes.length<want)flakes.push(mkFlake(want>baseWant?-10:Math.random()*innerHeight));
   if(flakes.length>want)flakes.length=want;
   for(const f of flakes){f.y+=f.v;f.x+=f.d+Math.sin(f.y/40)*.2;if(f.y>innerHeight+10){Object.assign(f,mkFlake());}
     ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,250,238,${f.o})`;ctx.fill();}
+  for(const b of bursts){b.life++;b.vx*=.965;b.vy=b.vy*.965+.09;b.x+=b.vx;b.y+=b.vy;b.o=Math.max(0,1-b.life/160);
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,246,220,${b.o})`;ctx.fill();}
+  bursts=bursts.filter(b=>b.o>0&&b.y<innerHeight+10);
   raf=requestAnimationFrame(tickSnow);
 }
 if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
