@@ -167,11 +167,13 @@ body.mode-intro #snow{z-index:6}
 .intro-foot{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
 .intro-foot span{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;padding:6px 12px;border:1px solid rgba(235,213,155,.5);border-radius:999px;color:#EADFC2;background:rgba(8,24,16,.5)}
 
-/* 포털 전환 */
-#portal{position:fixed;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;z-index:7;pointer-events:none;
-  background:radial-gradient(circle,#F6C97E 0,#A21F32 35%,#0C2B1F 70%);transform:scale(0);opacity:0}
-#portal.go{animation:portal 1.05s cubic-bezier(.65,0,.3,1) forwards}
-@keyframes portal{0%{transform:scale(0);opacity:1}55%{transform:scale(90);opacity:1}100%{transform:scale(90);opacity:0}}
+/* 입장 전환: 화면이 어두워지고, 작은 빛이 곡선을 따라 날아가며 카메라가 그 빛을 쫓아감 */
+#veil{position:fixed;inset:0;background:#040C09;opacity:0;pointer-events:none;z-index:7;transition:opacity .6s ease}
+#veil.on{pointer-events:auto}
+#wisp{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:8;opacity:0;transition:opacity .4s}
+#wisp.on{opacity:1}
+.intro.flying{transform-origin:0 0;will-change:transform;overflow:hidden}
+.intro.flying .intro-in{pointer-events:none}
 
 /* ============================================================
    본 화면: 소나무 초록 바탕 + 양피지 연구 노트
@@ -312,7 +314,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 
 /* 움직임 줄이기 */
 @media (prefers-reduced-motion:reduce){
-  .tcard,.tslot,.tarot-card,.stage,.deck button,#portal.go,.intro-in>*,.intro-light,.enter,.garland,.spark,.ripple,.tcard .back svg,.trio-msg,.trio-cap .dots i{animation:none!important;transition:none!important}
+  .tcard,.tslot,.tarot-card,.stage,.deck button,#veil,#wisp,.intro-in>*,.intro-light,.enter,.garland,.spark,.ripple,.tcard .back svg,.trio-msg,.trio-cap .dots i{animation:none!important;transition:none!important}
   .tcard{--tx:0deg!important;--ty:0deg!important}
   #snow{display:none}
 }
@@ -347,7 +349,8 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
     <div class="intro-foot" aria-hidden="true"><span>20개 연구회</span><span>6단계 연구 여정</span><span>나의 연구 MBTI</span></div>
   </div>
 </section>
-<div id="portal" aria-hidden="true"></div>
+<div id="veil" aria-hidden="true"></div>
+<canvas id="wisp" aria-hidden="true"></canvas>
 
 <!-- ============ 본 화면 ============ -->
 <div class="app" id="app" hidden>
@@ -541,13 +544,55 @@ function resetTrio(){
   $("trioMsg").innerHTML="";$("trioMsg").style.animation="";$("capTxt").textContent=CAPS[0];clearTilt();
   $("enter").setAttribute("aria-disabled","true");$("skip").hidden=false;
 }
+let entering=false;
 function enterApp(){
-  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  if(entering)return;
   const show=()=>{$("intro").hidden=true;$("app").hidden=false;document.body.classList.remove("mode-intro");S.step=0;S.card=null;render();window.scrollTo({top:0});setSnowDensity(40);};
-  if(reduce){show();return;}
-  const p=$("portal");p.classList.remove("go");void p.offsetWidth;p.classList.add("go");
-  setTimeout(show,560);
-  setTimeout(()=>p.classList.remove("go"),1100);
+  if(REDUCE){show();return;}
+  entering=true;
+  const veil=$("veil"),wc=$("wisp"),wx=wc.getContext("2d"),W=innerWidth,H=innerHeight;
+  wc.width=W*devicePixelRatio;wc.height=H*devicePixelRatio;wx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  /* 1) 빛이 지나갈 무작위 곡선: 입장 버튼에서 출발해 화면 곳곳을 돌다 중앙 근처에서 끝남 */
+  const br=$("enter").getBoundingClientRect();
+  const pts=[{x:br.left+br.width/2,y:br.top+br.height/2}];
+  for(let i=0;i<4;i++)pts.push({x:W*(.15+Math.random()*.7),y:H*(.12+Math.random()*.7)});
+  pts.push({x:W*(.42+Math.random()*.16),y:H*(.38+Math.random()*.2)});
+  const P=[pts[0],...pts,pts[pts.length-1]];
+  const spline=t=>{const n=pts.length-1,u=Math.min(n-1e-6,t*n),i=Math.floor(u),f=u-i;
+    const p0=P[i],p1=P[i+1],p2=P[i+2],p3=P[i+3];const q=(a,b,c,d)=>.5*((2*b)+(-a+c)*f+(2*a-5*b+4*c-d)*f*f+(-a+3*b-3*c+d)*f*f*f);
+    return {x:q(p0.x,p1.x,p2.x,p3.x),y:q(p0.y,p1.y,p2.y,p3.y)};};
+  const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  /* 2) 카메라: 빛을 화면 가운데에 두도록 인트로 전체를 이동·확대 */
+  const intro=$("intro");intro.classList.add("flying");intro.classList.remove("lit");
+  veil.classList.add("on");veil.style.transition="opacity .9s ease";veil.style.opacity=".72";
+  wc.classList.add("on");
+  const DUR=2600,t0=performance.now(),trail=[];let cam={x:0,y:0,s:1},done=false;
+  function frame(now){
+    const t=Math.min(1,(now-t0)/DUR),e=ease(t),p=spline(e);
+    const s=1+.45*Math.sin(Math.PI*Math.min(1,t*1.15));              /* 서서히 다가갔다가 끝에서 살짝 물러남 */
+    const tx=Math.min(0,Math.max(W-W*s,W/2-p.x*s)),ty=Math.min(0,Math.max(H-H*s,H/2-p.y*s)); /* 확대된 화면이 항상 뷰포트를 덮도록 제한 */
+    cam.s+=(s-cam.s)*.08;cam.x+=(tx-cam.x)*.08;cam.y+=(ty-cam.y)*.08;    /* 카메라가 한 박자 늦게 따라감 */
+    intro.style.transform=`translate(${cam.x.toFixed(1)}px,${cam.y.toFixed(1)}px) scale(${cam.s.toFixed(3)})`;
+    /* 3) 빛과 꼬리 그리기 (화면 좌표: 카메라 변환을 그대로 적용) */
+    const sx=p.x*cam.s+cam.x,sy=p.y*cam.s+cam.y;
+    trail.push({x:sx,y:sy,a:1});if(trail.length>42)trail.shift();
+    wx.clearRect(0,0,W,H);
+    trail.forEach((q,i)=>{const k=i/trail.length;wx.beginPath();wx.arc(q.x,q.y,1.2+k*3.2,0,Math.PI*2);wx.fillStyle=`rgba(255,228,160,${(k*k*.9).toFixed(3)})`;wx.fill();});
+    const g=wx.createRadialGradient(sx,sy,0,sx,sy,120);g.addColorStop(0,"rgba(255,246,220,.95)");g.addColorStop(.12,"rgba(255,226,160,.8)");g.addColorStop(.4,"rgba(246,201,126,.22)");g.addColorStop(1,"rgba(246,201,126,0)");
+    wx.fillStyle=g;wx.fillRect(sx-120,sy-120,240,240);
+    wx.beginPath();wx.arc(sx,sy,3.5+Math.sin(now/60)*.8,0,Math.PI*2);wx.fillStyle="#FFF8E6";wx.fill();
+    if(t>.8&&!done){done=true;veil.style.transition="opacity .55s ease";veil.style.opacity="1";}   /* 끝자락: 완전히 어두워짐 */
+    if(t<1)requestAnimationFrame(frame);
+    else{
+      /* 4) 어둠 속에서 다음 화면으로 바꾸고, 빛이 걷히듯 밝아짐 */
+      setTimeout(()=>{
+        show();intro.classList.remove("flying");intro.style.transform="";wc.classList.remove("on");wx.clearRect(0,0,W,H);
+        requestAnimationFrame(()=>{veil.style.transition="opacity .9s ease";veil.style.opacity="0";});
+        setTimeout(()=>{veil.classList.remove("on");entering=false;},950);
+      },250);
+    }
+  }
+  requestAnimationFrame(frame);
 }
 function backToIntro(){
   $("app").hidden=true;$("intro").hidden=false;document.body.classList.add("mode-intro");resetTrio();
