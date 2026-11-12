@@ -76,7 +76,9 @@ body.mode-intro #snow{z-index:6}
 .intro-in{margin:auto}
 /* 포인터를 따라가는 촛불빛 */
 .intro-light{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .7s;mix-blend-mode:screen;
-  background:radial-gradient(circle 340px at var(--lx,50%) var(--ly,45%),rgba(255,224,160,.6),rgba(255,205,120,.22) 45%,transparent 72%)}
+  background:
+   radial-gradient(circle 110px at var(--lx,50%) var(--ly,45%),rgba(255,240,205,.55),transparent 100%),
+   radial-gradient(circle 340px at var(--lx,50%) var(--ly,45%),rgba(255,224,160,.6),rgba(255,205,120,.22) 45%,transparent 72%)}
 .intro.lit .intro-light{opacity:1;animation:flicker 2.6s ease-in-out infinite}
 @keyframes flicker{0%,100%{filter:brightness(1)}30%{filter:brightness(1.12)}55%{filter:brightness(.92)}80%{filter:brightness(1.06)}}
 /* 빈 곳을 눌렀을 때 퍼지는 빛 고리 */
