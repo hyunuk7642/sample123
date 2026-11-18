@@ -1246,7 +1246,7 @@ function drawTrailer(t){
         g.strokeStyle=fg;g.lineCap="round";g.beginPath();g.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+Math.PI*2*pp);g.stroke();
         g.font=fD(26*u);g.fillStyle=fg;g.textAlign="center";g.textBaseline="middle";g.fillText(Math.round(pp*100)+"%",cx,cy);
         g.font=`600 ${Math.max(13,14*u)}px "IBM Plex Sans KR",sans-serif`;if(narrow){g.textAlign="left";g.fillText(v,ch*1.05,cy);}else g.fillText(v,cx,ch-18*u);}
-      else{g.font=`600 ${Math.max(14,16*u)}px "IBM Plex Sans KR",sans-serif`;g.fillStyle=fg;g.textBaseline="top";const ls=wrapText(g,v,cw-32*u).slice(0,4);ls.forEach((ln,k)=>g.fillText(ln,16*u,40*u+k*22*u));
+      else{const fs=Math.max(14,16*u);g.font=`600 ${fs}px "IBM Plex Sans KR",sans-serif`;g.fillStyle=fg;g.textBaseline="top";const ls=wrapText(g,v,cw-32*u).slice(0,4);ls.forEach((ln,k)=>g.fillText(ln,16*u,Math.max(34,40*u)+k*fs*1.45));
         if(i===2){const n=Math.max(1,P.topics.length);for(let b=0;b<5;b++){const h=(10+((b*7+tr.card.id)%5)*8)*u*eio((s-.8)/.8);g.fillStyle=fg;g.globalAlpha=clamp(p*3)*(b<n+1?1:.35);g.fillRect(16*u+b*16*u,ch-14*u-h,10*u,h);}}}
       g.restore();});
     tFrameUI(t,4,false);return;
