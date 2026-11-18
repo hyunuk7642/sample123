@@ -1229,7 +1229,7 @@ function bigText(lines,s,opts={}){ /* 화면을 꽉 채우는 큰 글씨, 줄마
   g.save();g.font=fD(size,fam);g.textAlign=opts.align||"center";g.textBaseline="middle";
   const lh=size*1.08,y0=(opts.y||H/2)-(lines.length-1)*lh/2,x=opts.align==="left"?W*.06:W/2;
   lines.forEach((ln,i)=>{const p=clamp((s-(opts.start||0)-i*(opts.gap??.08))/(opts.dur||.35)),e=eback(p);if(p<=0)return;
-    g.save();g.globalAlpha=clamp(p*3)*(opts.alpha??1);const dx=opts.shake?Math.sin(s*60+i)*6*u*(1-clamp((s-.6)/.3)):0;
+    g.save();g.globalAlpha=clamp(p*4)*(opts.alpha??1);const dx=opts.shake?Math.sin(s*60+i)*6*u*(1-clamp((s-.6)/.3)):0;
     g.translate(x+dx+(opts.ox||0),y0+i*lh+(1-e)*(opts.fromY??40)*u);g.scale(opts.pop?.7+.3*e:1,opts.pop?.7+.3*e:1);
     if(opts.shadow){g.fillStyle=opts.shadow;g.fillText(ln,6*u,6*u);}
     if(opts.outline){g.lineWidth=2;g.strokeStyle=opts.color;g.strokeText(ln,0,0);}else{g.fillStyle=opts.color||TP.cream;g.fillText(ln,0,0);}
@@ -1294,7 +1294,7 @@ function fxWords(b,s,d){ /* 단어가 한 컷씩 화면 전체로, 뒤에서 도
   else if(b.steps){for(let k=0;k<=i;k++){g.fillRect(-R+k*R*.7,R*.4-k*R*.45,R*.6,R*.45);}}
   else{g.beginPath();if(i%3===0)g.arc(0,0,R,0,Math.PI*2);else if(i%3===1)g.roundRect(-R,-R,2*R,2*R,R*.25);else{g.moveTo(0,-R);g.lineTo(R,R*.8);g.lineTo(-R,R*.8);g.closePath();}g.fill();}
   g.restore();
-  bigText([b.w[i]],ls,{color:fgs[i%3],pop:true,dur:.25,shadow:i%3===1?"rgba(0,0,0,.35)":(i%3===2?"rgba(255,255,255,.6)":null)});
+  bigText([b.w[i]],ls,{color:fgs[i%3],pop:true,dur:.25,shadow:i%3===1?"rgba(0,0,0,.35)":null});
   g.save();g.font=fM(12*u);g.fillStyle=fgs[i%3];g.textAlign="center";g.textBaseline="bottom";g.globalAlpha=.7;g.fillText(b.w.map((w,k)=>k===i?"● "+w:"○ "+w).join("   "),W/2,H*.9);g.restore();
 }
 function fxLetters(b,s,d){ /* 글자가 한 자씩 튀어나와 화면을 채움 */
