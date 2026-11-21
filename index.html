@@ -200,6 +200,9 @@ body.mode-intro #snow{z-index:6}
 #wisp.on{opacity:1}
 .intro.flying{transform-origin:0 0;will-change:transform;overflow:hidden}
 .intro.flying .intro-in{pointer-events:none}
+.intro.flying .intro-in,.intro.flying .intro-frame,.intro.flying .intro-corner{opacity:var(--ui,1)}
+.intro.flying .intro-in{transform:translateY(calc((1 - var(--ui,1)) * -16px))}
+.intro.flying .intro-light{animation:none}
 
 /* ============================================================
    본 화면: 소나무 초록 바탕 + 양피지 연구 노트
@@ -656,70 +659,88 @@ function resetTrio(){
   $("enter").setAttribute("aria-disabled","true");$("skip").hidden=false;
 }
 let entering=false;
-/* 반딧불처럼 떠다니는 빛의 경로를 미리 계산: 부드러운 방향 전환 + 가장자리에서는 안쪽으로 되돌아옴 */
-function wanderPath(W,H,start,N){
-  const pts=[];let x=start.x,y=start.y;
-  let ang=Math.atan2(H/2-y,W/2-x)+(Math.random()-.5)*1.2,turn=0,wob=Math.random()*6;
-  const R=Math.min(W,H)*.36;
-  for(let i=0;i<N;i++){
-    const t=i/N;
-    const sp=6.2*Math.min(1,t/.12)*(1-.35*Math.max(0,(t-.82)/.18));          /* 천천히 출발, 끝에서 살짝 느려짐 */
-    turn=turn*.93+(Math.random()-.5)*.09;                                     /* 방향 변화는 저역 통과로 부드럽게 */
-    const dx=W/2-x,dy=H/2-y,d=Math.hypot(dx,dy);
-    const want=Math.atan2(dy,dx);let diff=Math.atan2(Math.sin(want-ang),Math.cos(want-ang));
-    const edge=Math.max(0,Math.min(1,(d/R-.55)/.45));                         /* 중심에서 멀수록 안쪽으로 조향 */
-    ang+=turn*(1-edge*.6)+diff*.07*edge;
-    x+=Math.cos(ang)*sp;y+=Math.sin(ang)*sp;
-    wob+=.11;const nx=-Math.sin(ang),ny=Math.cos(ang),w=Math.sin(wob)*2.2;   /* 진행 방향과 수직으로 살랑임 */
-    pts.push({x:x+nx*w,y:y+ny*w});
-  }
-  return pts;
+/* ============================================================
+   입장 전환: 빛이 날아오르고 → 카메라가 따라가고 → 빛 속으로 들어가고 → 빛이 가운데부터 걷히며 다음 화면.
+   모든 값은 시간 t의 매끄러운 함수입니다(프레임 누적·난수·딱 멈추는 한계값 없음). 그래서 어느 기기에서도 같은 곡선으로 움직입니다.
+   ============================================================ */
+const sstep=x=>{x=Math.max(0,Math.min(1,x));return x*x*x*(x*(x*6-15)+10);};   /* 시작과 끝의 속도·가속도가 0인 완화 */
+function lightPath(W,H,start){
+  /* 버튼에서 떠올라 느린 호를 한 바퀴쯤 그리고 화면 가운데에 멈추는 경로. 진폭이 양 끝에서 0이라 출발과 도착이 부드럽습니다. */
+  const c={x:W/2,y:H*.46},A=Math.min(W,H)*.2,ax=W>H?1.35:.85,dir=Math.random()<.5?1:-1,
+        p0=Math.random()*6.283,p1=Math.random()*6.283,p2=Math.random()*6.283,turns=.8+Math.random()*.3;
+  return u=>{u=Math.max(0,Math.min(1,u));const m=sstep(u*1.35),env=Math.pow(Math.sin(Math.PI*u),1.3),a=dir*u*6.283*turns+p0;
+    return {x:start.x+(c.x-start.x)*m+(Math.cos(a)+.22*Math.sin(a*1.7+p1))*A*ax*env,
+            y:start.y+(c.y-start.y)*m+(Math.sin(a)*.75+.18*Math.sin(a*1.4+p2))*A*env};};
 }
 function enterApp(){
   if(entering)return;
   const show=()=>{$("intro").hidden=true;$("app").hidden=false;document.body.classList.remove("mode-intro");S.step=0;S.card=null;render();window.scrollTo({top:0});setSnowDensity(40);};
   if(REDUCE){show();return;}
   entering=true;
-  const veil=$("veil"),flash=$("flash"),wc=$("wisp"),wx=wc.getContext("2d"),W=innerWidth,H=innerHeight;
-  wc.width=W*devicePixelRatio;wc.height=H*devicePixelRatio;wx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-  const br=$("enter").getBoundingClientRect();
-  const DUR=3400,DIVE=.76,FPS=60,N=Math.round(DUR/1000*FPS);
-  const path=wanderPath(W,H,{x:br.left+br.width/2,y:br.top+br.height/2},N);
-  const at=t=>{const u=Math.max(0,Math.min(N-1.001,t*(N-1))),i=Math.floor(u),f=u-i;const a=path[i],b=path[i+1];return {x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f};};
-  const intro=$("intro");intro.classList.add("flying");intro.classList.remove("lit");
-  veil.classList.add("on");veil.style.transition="opacity 1s ease";veil.style.opacity=".7";
-  wc.classList.add("on");flash.style.transition="none";flash.style.opacity="0";
-  const t0=performance.now(),trail=[];let cam={x:0,y:0,s:1},swapped=false;
+  const veil=$("veil"),flash=$("flash"),wc=$("wisp"),wx=wc.getContext("2d"),intro=$("intro"),app=$("app");
+  const W=innerWidth,H=innerHeight,dpr=Math.min(devicePixelRatio||1,1.5),diag=Math.hypot(W,H),u0=Math.min(W,H)/900;
+  wc.width=W*dpr;wc.height=H*dpr;wx.setTransform(dpr,0,0,dpr,0,0);
+  const br=$("enter").getBoundingClientRect(),path=lightPath(W,H,{x:br.left+br.width/2,y:br.top+br.height/2});
+  const FLY=4600,REVEAL=1600,UEND=.8,DIVE0=.64,cl=x=>Math.max(0,Math.min(1,x));
+  const uOf=t=>t/UEND;
+  /* 카메라: 빛보다 0.13초 늦게 따라가고, 확대된 만큼만 움직여 화면 밖을 드러내지 않습니다(딱 멈추지 않고 서서히 한계에 붙음) */
+  const cam=t=>{
+    const q=path(uOf(t-.028)),f=.6*sstep((t-.02)/.36)+.4*sstep((t-.56)/.3),d=cl((t-DIVE0)/(1-DIVE0));
+    const sc=(1+.75*sstep(t/.5))*Math.exp(2.4*d*d*d);
+    const soft=(dev,room)=>room>1e-3?room*Math.tanh(dev/room):0;
+    const tx=-W*(sc-1)/2-soft((q.x-W/2)*sc*f,W*(sc-1)/2),ty=-H*(sc-1)/2-soft((q.y-H/2)*sc*f,H*(sc-1)/2);
+    return {sc,tx,ty,d};
+  };
+  clearTimeout(lightOff);intro.classList.add("flying","lit");veil.classList.add("on");wc.classList.add("on");
+  flash.style.transition="none";flash.style.opacity="0";flash.style.webkitMaskImage=flash.style.maskImage="none";
+  const t0=performance.now();let swapAt=0;
   function frame(now){
-    const t=Math.max(0,Math.min(1,(now-t0)/DUR)),p=at(t);
-    let s,lag;
-    if(t<DIVE){s=1+.42*Math.min(1,t/.35);lag=.07;}                                  /* 따라가기: 천천히 다가감 */
-    else{const d=(t-DIVE)/(1-DIVE),e=d*d*d;s=1.42*Math.pow(9,e);lag=.07+.28*d;}      /* 쑤욱: 빛 속으로 가속 확대 */
-    const tx=Math.min(0,Math.max(W-W*s,W/2-p.x*s)),ty=Math.min(0,Math.max(H-H*s,H/2-p.y*s));
-    cam.s+=(s-cam.s)*lag;cam.x+=(tx-cam.x)*lag;cam.y+=(ty-cam.y)*lag;
-    intro.style.transform=`translate(${cam.x.toFixed(1)}px,${cam.y.toFixed(1)}px) scale(${cam.s.toFixed(3)})`;
-    const sx=p.x*cam.s+cam.x,sy=p.y*cam.s+cam.y;
-    trail.push({x:sx,y:sy});if(trail.length>48)trail.shift();
-    wx.clearRect(0,0,W,H);
-    /* 꼬리: 점점 굵고 밝아지는 선 */
-    for(let i=1;i<trail.length;i++){const k=i/trail.length;wx.beginPath();wx.moveTo(trail[i-1].x,trail[i-1].y);wx.lineTo(trail[i].x,trail[i].y);
-      wx.lineWidth=.6+k*4.5;wx.strokeStyle=`rgba(255,228,160,${(k*k*.85).toFixed(3)})`;wx.lineCap="round";wx.stroke();}
-    /* 빛: 다이브 구간에서 후광이 화면을 덮을 만큼 커짐 */
-    const dv=t<DIVE?0:(t-DIVE)/(1-DIVE),rad=120+Math.pow(dv,2.2)*Math.max(W,H)*1.3;
-    const g=wx.createRadialGradient(sx,sy,0,sx,sy,rad);
-    g.addColorStop(0,"rgba(255,250,232,.98)");g.addColorStop(.1,"rgba(255,232,170,.85)");g.addColorStop(.38,`rgba(246,201,126,${.24+dv*.5})`);g.addColorStop(1,"rgba(246,201,126,0)");
-    wx.fillStyle=g;wx.fillRect(sx-rad,sy-rad,rad*2,rad*2);
-    wx.beginPath();wx.arc(sx,sy,3.5+Math.sin(now/55)*.9+dv*30,0,Math.PI*2);wx.fillStyle="#FFF8E6";wx.fill();
-    if(dv>0){flash.style.setProperty("--fx",sx.toFixed(0)+"px");flash.style.setProperty("--fy",sy.toFixed(0)+"px");flash.style.opacity=Math.pow(dv,1.6).toFixed(3);veil.style.transition="none";veil.style.opacity=(.7*(1-dv)).toFixed(3);}
-    if(t<1)requestAnimationFrame(frame);
-    else if(!swapped){
-      swapped=true;
-      /* 빛 속에서 다음 화면으로 바꾸고, 빛이 걷히며 화면이 드러남 */
-      show();intro.classList.remove("flying");intro.style.transform="";wc.classList.remove("on");wx.clearRect(0,0,W,H);
-      veil.style.opacity="0";veil.classList.remove("on");
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{flash.style.transition="opacity 1.1s ease";flash.style.opacity="0";}));
-      setTimeout(()=>{entering=false;},1200);
+    const ms=Math.max(0,now-t0);
+    if(!swapAt){
+      const t=cl(ms/FLY),{sc,tx,ty,d}=cam(t),zs=Math.pow(sc,.7);
+      intro.style.transform=`translate3d(${tx.toFixed(2)}px,${ty.toFixed(2)}px,0) scale(${sc.toFixed(4)})`;
+      intro.style.setProperty("--ui",(1-sstep(t/.17)).toFixed(3));          /* 글자와 카드는 조용히 물러나고 아트리움만 남음 */
+      const wp=path(uOf(t));intro.style.setProperty("--lx",wp.x.toFixed(1)+"px");intro.style.setProperty("--ly",wp.y.toFixed(1)+"px");
+      const scr=tt=>{const q=path(uOf(tt));return {x:q.x*sc+tx,y:q.y*sc+ty};},L=scr(t),appear=sstep(t/.1);
+      wx.globalCompositeOperation="source-over";wx.clearRect(0,0,W,H);
+      /* 어둠: 빛 둘레만 밝게 남는 스포트라이트. 다이브가 시작되면 서서히 걷힘 */
+      const dark=.76*sstep(t/.22)*(1-sstep((d-.1)/.6));
+      if(dark>.003){const R=diag*(.6+.03*Math.sin(ms/900))*(1+1.5*d),g=wx.createRadialGradient(L.x,L.y,0,L.x,L.y,R);
+        g.addColorStop(0,"rgba(4,12,9,0)");g.addColorStop(.25,`rgba(4,12,9,${(dark*.16).toFixed(3)})`);g.addColorStop(.65,`rgba(4,12,9,${(dark*.8).toFixed(3)})`);g.addColorStop(1,`rgba(4,12,9,${dark.toFixed(3)})`);
+        wx.fillStyle=g;wx.fillRect(0,0,W,H);}
+      wx.globalCompositeOperation="lighter";
+      /* 꼬리: 지나온 0.3초의 경로를 지금 카메라로 다시 그림 → 끊김 없는 빛줄기 */
+      const N=72,span=.085;
+      for(let k=N;k>=1;k--){const tt=t-span*k/N;if(tt<0)continue;const q=scr(tt),f=1-k/N;wx.beginPath();wx.arc(q.x,q.y,(.8+5.2*f*f)*u0*zs,0,6.283);wx.fillStyle=`rgba(255,214,140,${((.04+.3*f*f)*appear).toFixed(3)})`;wx.fill();}
+      /* 빛가루: 경로에서 떨어져 천천히 가라앉으며 사라짐 */
+      const tsec=ms/1000,flyS=FLY/1000;
+      for(let j=0;j<44;j++){const born=j*.07,age=tsec-born;if(age<0||age>1.15||born/flyS>UEND)continue;
+        const w=path(uOf(born/flyS)),k=age/1.15,ra=Math.sin(j*12.9898)*43758.5453,r1=ra-Math.floor(ra),rb=Math.sin(j*78.233)*12543.21,r2=rb-Math.floor(rb);
+        const x=(w.x+(r1-.5)*26*u0+(r1-.5)*20*u0*k)*sc+tx,y=(w.y+(r2-.5)*26*u0+34*u0*k*k)*sc+ty;
+        wx.beginPath();wx.arc(x,y,(1.5+1.5*r2)*u0*zs*(1-k*.5),0,6.283);wx.fillStyle=`rgba(255,236,190,${(.7*(1-k)*(1-k)).toFixed(3)})`;wx.fill();}
+      /* 빛: 숨 쉬듯 맥동하고, 다이브에서 화면을 덮을 만큼 자람 */
+      const pulse=1+.07*Math.sin(ms/260)+.04*Math.sin(ms/97),gr=95*u0*zs*pulse+Math.pow(d,2.2)*diag*1.25;
+      const g2=wx.createRadialGradient(L.x,L.y,0,L.x,L.y,gr);
+      g2.addColorStop(0,`rgba(255,250,235,${appear.toFixed(3)})`);g2.addColorStop(.08,`rgba(255,236,185,${(.85*appear).toFixed(3)})`);g2.addColorStop(.3,`rgba(246,201,126,${((.22+.5*d)*appear).toFixed(3)})`);g2.addColorStop(1,"rgba(246,201,126,0)");
+      wx.fillStyle=g2;wx.fillRect(L.x-gr,L.y-gr,gr*2,gr*2);
+      wx.beginPath();wx.arc(L.x,L.y,3.2*u0*zs*pulse*appear+d*d*40*u0,0,6.283);wx.fillStyle="#FFF8E6";wx.fill();
+      flash.style.setProperty("--fx",L.x.toFixed(0)+"px");flash.style.setProperty("--fy",L.y.toFixed(0)+"px");flash.style.opacity=sstep((d-.55)/.45).toFixed(3);
+      if(t>=1){
+        /* 빛이 화면을 가득 채운 순간에 다음 화면으로 바꿈 */
+        swapAt=now;show();
+        intro.classList.remove("flying","lit");intro.style.transform="";intro.style.removeProperty("--ui");
+        wc.classList.remove("on");wx.globalCompositeOperation="source-over";wx.clearRect(0,0,W,H);
+        flash.style.opacity="1";app.style.transformOrigin=`50% ${(H*.42).toFixed(0)}px`;app.style.transform="scale(1.14)";
+      }
+    }else{
+      /* 드러남: 빛이 가운데부터 둥글게 걷히고, 새 화면은 살짝 앞에서 제자리로 내려앉음 */
+      const r=cl((now-swapAt)/REVEAL),e=1-Math.pow(1-r,3),rho=sstep(Math.pow(r,.6))*diag*.78;   /* 걷힘은 머뭇거리지 않고 바로 시작 */
+      app.style.transform=`scale(${(1+.14*(1-e)).toFixed(4)})`;
+      const mask=`radial-gradient(circle at 50% 46%, transparent ${(rho*.5).toFixed(1)}px, #000 ${(rho+1).toFixed(1)}px)`;
+      flash.style.webkitMaskImage=mask;flash.style.maskImage=mask;flash.style.opacity=(1-sstep((r-.3)/.7)).toFixed(3);
+      if(r>=1){app.style.transform="";app.style.transformOrigin="";flash.style.opacity="0";flash.style.webkitMaskImage=flash.style.maskImage="none";veil.classList.remove("on");entering=false;return;}
     }
+    requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 }
