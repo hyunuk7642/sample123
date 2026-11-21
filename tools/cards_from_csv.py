@@ -7,7 +7,7 @@
 - 대표교사 성함·이메일 같은 개인정보는 넣지 않습니다. 카드에 보이는 내용만 추립니다.
 - 연구회명은 index.html 의 G 배열(폼 드롭다운과 같은 이름)과 글자 그대로 맞아야 합니다.
 """
-import csv, json, re, sys, pathlib
+import csv, io, json, re, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 HTML = ROOT / "index.html"
@@ -32,10 +32,27 @@ COL = {  # 폼 문항 제목의 앞부분으로 열을 찾습니다 (문항이 �
 # 응답 원문의 명백한 오타만 고칩니다 (내용은 바꾸지 않음)
 FIX = {"초등 영초등 영어": "초등 영어", "쓰는태도": "쓰는 태도"}
 
+# 글자 수 제한 등으로 문장 중간에서 끊긴 응답: 끝에 말줄임표를 붙여 잘렸음을 표시합니다
+TRUNCATED = ["Padlet을 통한 교류를 이어"]
+BULLET = re.compile(r"^\s*(?:[-–•·▪◦]|○|●|■|□|▶|\d+[.)])\s*")
+
 def clean(s: str) -> str:
-    s = (s or "").replace(" ", " ").strip()
-    s = re.sub(r"[ \t]+", " ", s)
+    """공백 정리. 목록(줄머리 기호)으로 쓴 응답은 줄바꿈을 살리고, 문장 중간의 줄바꿈은 띄어쓰기로 잇습니다."""
+    s = (s or "").replace("\u00a0", " ").replace("\r\n", "\n").replace("\r", "\n")
+    out = []
+    for ln in s.split("\n"):
+        ln = re.sub(r"[ \t]+", " ", ln).strip()
+        if not ln: continue
+        if BULLET.match(ln):
+            head = ln.lstrip()[0]
+            body = BULLET.sub("", ln).strip()
+            out.append(("\n" if out else "") + (body if head in "○●■□▶" else "· " + body))
+        else:
+            out.append((" " if out else "") + ln)
+    s = "".join(out).strip()
     for a, b in FIX.items(): s = s.replace(a, b)
+    for t in TRUNCATED:
+        if s.endswith(t): s += "…"
     return s
 
 def level_of(target: str, group: str) -> str:
@@ -52,7 +69,7 @@ def main(path: str):
     for enc in ("utf-8-sig", "utf-8", "cp949"):
         try: text = raw.decode(enc); break
         except UnicodeDecodeError: continue
-    rows = list(csv.reader(text.splitlines()))
+    rows = list(csv.reader(io.StringIO(text, newline="")))   # 셀 안의 줄바꿈을 보존
     head = rows[0]
     idx = {}
     for key, prefix in COL.items():
