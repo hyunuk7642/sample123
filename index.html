@@ -525,7 +525,7 @@ const CARDS=G.map((g,i)=>{const d=DETAILS[g[0]]||null;
     type:null,status:d?d.status:"",intro:d?d.intro:"",detail:d?{design:d.design,field:d.field,learn:d.learn}:null};});
 const FILLED=CARDS.filter(c=>c.detail).length;
 /* 연구회가 낸 카드 그림이 있는 번호 (tools/card_art.py 가 다시 씀) */
-/* ART:BEGIN */const CARD_ART=new Set([1, 2, 4, 8, 9]);/* ART:END */
+/* ART:BEGIN */const CARD_ART=new Set([1, 2, 4, 8, 9, 15, 16, 17, 18, 20]);/* ART:END */
 const artOf=c=>CARD_ART.has(c.id)?`assets/cards/${String(c.id).padStart(2,"0")}.webp`:"";
 const FIELDS={design:[["연구 질문","Research Question"],["설계 방법","Method"]],
  field:[["대상·교과","Subject"],["활동","Activity"],["시행착오","Trial & Error"]],
