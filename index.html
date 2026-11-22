@@ -786,7 +786,10 @@ const S={step:0,card:null,qi:0,resp:[],topic:null};
 $("topNote").textContent=`연구회 자료를 수합하는 중입니다. 20곳 중 ${FILLED}곳의 카드가 채워졌고, 나머지는 응답이 오는 대로 추가됩니다.`;
 /* 보이는 단계: 응답을 낸 연구회가 통째로 비워 둔 단계(설계·적용·배움)는 레일에서 빼고 건너뜁니다. 응답이 아직 없는 연구회는 모든 단계에 '수합 중' 안내가 나옵니다. */
 const STAGE_KEY=[null,"design","field","learn",null,null];
-function visSteps(){const c=S.card;return [0,1,2,3,4,5].filter(i=>!(c&&c.detail&&STAGE_KEY[i]&&!(c.detail[STAGE_KEY[i]]||[]).length));}
+/* 적용 단계는 '대상·교과'만 있고 활동·시행착오가 없으면 낸 내용이 없는 것으로 봅니다. 이때 대상·교과는 설계 단계 끝에 붙여 보여 줍니다. */
+const stageItems=(c,k)=>{const a=(c.detail&&c.detail[k])||[];return k==="field"&&!a.some(([l])=>l!=="대상·교과")?[]:a;};
+const movedTarget=c=>c.detail&&!stageItems(c,"field").length?(c.detail.field||[]).filter(([l])=>l==="대상·교과"):[];
+function visSteps(){const c=S.card;return [0,1,2,3,4,5].filter(i=>!(c&&c.detail&&STAGE_KEY[i]&&!stageItems(c,STAGE_KEY[i]).length));}
 const stepNo=i=>String(visSteps().indexOf(i)+1).padStart(2,"0");
 function rail(){ const v=visSteps();$("steps").style.gridTemplateColumns=`repeat(${v.length},1fr)`;
   $("steps").innerHTML=v.map((i,k)=>`<li class="${i===S.step?'on':i<S.step?'done':''}"><i>${String(k+1).padStart(2,"0")}</i>${STAGES[i][0]}</li>`).join(""); }
@@ -892,8 +895,8 @@ function render(){
   }
  }
  else if(S.step>=1&&S.step<=3){
-  const k=["design","field","learn"][S.step-1], d=c.detail&&c.detail[k]&&c.detail[k].length?c.detail[k]:null, st=STAGES[S.step];
-  const EN=Object.fromEntries(FIELDS[k].map(f=>[f[0],f[1]]));
+  const k=["design","field","learn"][S.step-1], items=c.detail?stageItems(c,k).concat(k==="design"?movedTarget(c):[]):[], d=items.length?items:null, st=STAGES[S.step];
+  const EN=Object.fromEntries(Object.values(FIELDS).flat().map(f=>[f[0],f[1]]));
   const why="연구회 응답을 수합하는 중입니다. 자료가 오는 대로 채워집니다.";
   const body=d?d.map(([l,v])=>`<div class="field"><div class="label">${EN[l]||""} · ${l}</div><p>${v}</p></div>`).join("")
    :`<div class="empty">${why}<br>들어갈 항목: ${FIELDS[k].map(f=>f[0]).join(" · ")}</div>`;
