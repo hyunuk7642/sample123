@@ -21,7 +21,10 @@ def main(args):
         num, _, src = a.partition("=")
         n = int(num)
         if not 1 <= n <= 20 or not src: sys.exit(f"형식 오류: {a} (예: 08=그림.webp)")
-        im = ImageOps.exif_transpose(Image.open(src)).convert("RGB")
+        im = ImageOps.exif_transpose(Image.open(src))
+        if im.mode in ("RGBA", "LA", "P"):                     # 투명한 모서리는 카드 바탕색으로 채움
+            im = im.convert("RGBA"); bg = Image.new("RGBA", im.size, (27, 27, 51, 255)); bg.alpha_composite(im); im = bg
+        im = im.convert("RGB")
         im = ImageOps.fit(im, (720, 1080), Image.LANCZOS, centering=(0.5, 0.5))   # 2:3 에 맞춰 가운데 기준으로 자름
         dst = OUT / f"{n:02d}.webp"
         im.save(dst, "WEBP", quality=82, method=6)
