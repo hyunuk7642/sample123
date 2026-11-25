@@ -4,11 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI-E랩 연구 여정 · 나의 결, 우리의 겹</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230C2B1F'/%3E%3Cpath d='M32 9l5.6 17.4L55 32l-17.4 5.6L32 55l-5.6-17.4L9 32l17.4-5.6z' fill='%23EBD59B'/%3E%3C/svg%3E">
 <meta name="description" content="AI융합교육대학원 교사연구회 20곳의 연구 여정을 타로 카드처럼 뽑아 따라가고, 나의 연구 성향을 확인하는 체험 웹앱">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Black+Han+Sans&family=Nanum+Pen+Script&display=swap">
 <style>
+/* 글꼴은 저장소에 함께 둡니다(assets/fonts). 행사장 네트워크가 외부 글꼴 서버를 막아도 같은 글씨가 나옵니다. tools/subset_fonts.py 로 다시 만듭니다. */
+@font-face{font-family:"Gowun Batang";font-style:normal;font-weight:400;font-display:swap;src:url("assets/fonts/gowun-batang-400.woff2") format("woff2")}
+@font-face{font-family:"Gowun Batang";font-style:normal;font-weight:700;font-display:swap;src:url("assets/fonts/gowun-batang-700.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Sans KR";font-style:normal;font-weight:400;font-display:swap;src:url("assets/fonts/ibm-plex-sans-kr-400.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Sans KR";font-style:normal;font-weight:500;font-display:swap;src:url("assets/fonts/ibm-plex-sans-kr-500.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Sans KR";font-style:normal;font-weight:600;font-display:swap;src:url("assets/fonts/ibm-plex-sans-kr-600.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Sans KR";font-style:normal;font-weight:700;font-display:swap;src:url("assets/fonts/ibm-plex-sans-kr-700.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:400;font-display:swap;src:url("assets/fonts/ibm-plex-mono-400.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:500;font-display:swap;src:url("assets/fonts/ibm-plex-mono-500.woff2") format("woff2")}
+@font-face{font-family:"Black Han Sans";font-style:normal;font-weight:400;font-display:swap;src:url("assets/fonts/black-han-sans-400.woff2") format("woff2")}
+@font-face{font-family:"Nanum Pen Script";font-style:normal;font-weight:400;font-display:swap;src:url("assets/fonts/nanum-pen-script-400.woff2") format("woff2")}
 /* ============================================================
    디자인 원칙
    - 크리스마스: 소나무 초록 + 크랜베리 빨강 + 촛불 금색 + 눈(양피지) 바탕
@@ -57,8 +66,6 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offse
 h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0;line-height:1.3;text-wrap:balance}
 p{margin:0}
 img{max-width:100%}
-.mono{font-family:var(--f-mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* ---------- 오프닝 쇼릴 (어트랙트 루프) ---------- */
 #reel{position:fixed;inset:0;z-index:11;background:#F4ECDD;cursor:pointer;transition:opacity .5s ease}
@@ -86,7 +93,7 @@ body.mode-intro #snow{z-index:6}
    ============================================================ */
 .intro{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;
   padding:max(28px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom));
-  color:var(--pine-ink);background:#0A1E15 url("assets/christmas-atrium.png") center/cover no-repeat;overflow:auto}
+  color:var(--pine-ink);background:#0A1E15 url("assets/christmas-atrium.webp") center/cover no-repeat;overflow:auto}
 .intro::before{content:"";position:fixed;inset:0;background:
   radial-gradient(ellipse 70% 55% at 50% 42%,rgba(8,24,16,0),rgba(8,24,16,.62) 75%),
   linear-gradient(180deg,rgba(6,20,14,.5),rgba(6,20,14,.12) 35%,rgba(6,20,14,.72));pointer-events:none}
@@ -768,6 +775,7 @@ function enterApp(){
         swapAt=now;show();
         intro.classList.remove("flying","lit");intro.style.transform="";intro.style.removeProperty("--ui");
         wc.classList.remove("on");wx.globalCompositeOperation="source-over";wx.clearRect(0,0,W,H);
+        veil.classList.remove("on");                       /* 새 화면이 보이는 순간부터 탭을 받음 */
         flash.style.opacity="1";app.style.transformOrigin=`50% ${(H*.42).toFixed(0)}px`;app.style.transform="scale(1.14)";
       }
     }else{
@@ -1056,7 +1064,7 @@ function startReel(loop){
   $("intro").hidden=true;document.body.classList.remove("mode-intro");
   sizeReel();addEventListener("resize",sizeReel);
   const go=()=>{reel.t0=performance.now();cancelAnimationFrame(reel.raf);reel.raf=requestAnimationFrame(reelFrame);};
-  if(document.fonts&&document.fonts.load){Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"'),document.fonts.load('40px "Nanum Pen Script"')]),new Promise(r=>setTimeout(r,1500))]).then(go);}else go();
+  if(document.fonts&&document.fonts.load){Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('40px "Nanum Pen Script"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A")]),new Promise(r=>setTimeout(r,1500))]).then(go);}else go();
 }
 function stopReel(){
   if(!reel.on)return;reel.on=false;cancelAnimationFrame(reel.raf);removeEventListener("resize",sizeReel);
@@ -1266,21 +1274,6 @@ const SCRIPTS={
 "AI·생태데이터 초중고 이음 교육연구회":{c:"green",b:[{fx:"hook",l:["윙—"],zigzag:true},{fx:"solid",l:["더우면","모기 많다?"]},{fx:"words",w:["감지","분석","예측","실천"]},{fx:"solid",l:["함께 오르지","않는다"],lines2:true},{fx:"swap",a:["놀이터?"],b:["다시 생각"]},{fx:"typo",p:[["다른 조건도","생각하면"],["양천공원!"]]},{fx:"solid",l:["예측값 + 생활 조건","= 근거"]},{fx:"end",l:["AI·생태데이터","초중고 이음 교육연구회"],sub:"초·중·고 연계"}]}
 };
 /* 시나리오가 없는 연구회(추가 수합분)는 응답 데이터에서 자동 구성 */
-function wrapText(g,txt,max){const out=[];let line="";for(const ch of txt){const t=line+ch;if(g.measureText(t).width>max&&line){out.push(line);line=ch===" "?"":ch;}else line=t;}if(line)out.push(line);return out;}
-function wrapSmart(g,txt,max){
-  const words=txt.split(/\s+/).filter(Boolean),ws=words.map(w=>g.measureText(w).width),sp=g.measureText(" ").width,n=words.length;
-  if(!n)return [];const total=ws.reduce((a,b)=>a+b,0)+sp*(n-1);if(total<=max)return [txt];
-  const L=Math.ceil(total/max*1.02),target=total/L;
-  const bonus=i=>{const w=words[i];if(/[,，.。!?…]$/.test(w))return -.9;if(/(은|는|이|가|을|를|의|에|에서|로|으로|고|며|면|서|과|와|도|데|니까|지만)$/.test(w))return -.45;return 0;};
-  const width=(i,j)=>{let x=0;for(let k=i;k<j;k++)x+=ws[k];return x+sp*(j-i-1);};
-  const memo=new Map();
-  const best=(i,prevW,left)=>{const key=i+"|"+Math.round(prevW)+"|"+left;if(memo.has(key))return memo.get(key);let res={cost:Infinity,lines:null};
-    if(left===1){const w=width(i,n);if(w<=max)res={cost:Math.pow((w-target)/target,2)*2+(w<prevW*.92?1.2:0),lines:[words.slice(i).join(" ")]};}
-    else for(let j=i+1;j<=n-(left-1);j++){const w=width(i,j);if(w>max)break;const r=best(j,w,left-1);if(!r.lines)continue;
-      const c=Math.pow((w-target)/target,2)+(w<prevW*.92?1.2:0)+bonus(j-1)+r.cost;if(c<res.cost)res={cost:c,lines:[words.slice(i,j).join(" "),...r.lines]};}
-    memo.set(key,res);return res;};
-  const r=best(0,0,L);return r.lines||wrapText(g,txt,max);
-}
 const STOP=new Set("어떻게 무엇 수 있을까 있는가 할 하는 한 및 등 통해 위한 대한 따라 것 그 이 우리 학생 학생들 교사 교사들 자신 초등학생 중학생 고등학생 수업 연구 연구회 있다 했다 하였다 된다 같은 위해 중심 바탕 기반 활용 통한 여부 효과 효과적 과정 방법 설계 적용 어떤 더 좀 각 이후 먼저 직접 함께 서로 활동 교과 프로그램 핵심 내용 결과 경우 이전 처음 초기 점차 쓰기 가상 연계 거리 공식 단체 수준 단계 차시 모둠 모둠원 학년 학교 교실 학급 자료 도구 제작 개발 구성 진행 확인 경험 생각 모습 이야기".split(" "));
 const VERB_END=/(하던|하여|하는|하고|하면|하며|함|한다|했다|합니다|했습니다|하였다|되는|된다|되어|되고|이다|이던|스러운|적인|적으로|활용한|적용한|는지|싶|한지)$/;
 function keywords(txt,n){const toks=(txt||"").replace(/\([^)]*\)/g,"").replace(/[“”"'‘’\[\]{},.?!:;/~]/g," ").split(/\s+/).filter(Boolean),out=[];
@@ -1303,7 +1296,7 @@ function startTrailer(card){
   clearTimeout(tr.hideT);$("trailer").hidden=false;$("trailer").classList.remove("out");
   const c=$("trailerc"),d=devicePixelRatio||1;tr.W=innerWidth;tr.H=innerHeight;c.width=tr.W*d;c.height=tr.H*d;tr.ctx=c.getContext("2d");tr.ctx.setTransform(d,0,0,d,0,0);tr.u=Math.min(tr.W,tr.H)/900;
   const go=()=>{tr.t0=performance.now();cancelAnimationFrame(tr.raf);tr.raf=requestAnimationFrame(trFrame);};
-  if(document.fonts&&document.fonts.load)Promise.race([document.fonts.load('80px "Black Han Sans"'),new Promise(r=>setTimeout(r,800))]).then(go);else go();
+  if(document.fonts&&document.fonts.load)Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A")]),new Promise(r=>setTimeout(r,800))]).then(go);else go();
 }
 function stopTrailer(){ if(!tr.on)return;tr.on=false;cancelAnimationFrame(tr.raf);const el=$("trailer");el.classList.add("out");clearTimeout(tr.hideT);tr.hideT=setTimeout(()=>{el.hidden=true;},480);armIdle(); }
 $("trailer").addEventListener("pointerdown",e=>{e.stopPropagation();stopTrailer();});

@@ -23,3 +23,37 @@ python3 -I tools/card_art.py 08=그림.webp 01=다른그림.png
 ```
 
 그림이 없는 연구회는 코드로 그린 기본 카드가 나옵니다.
+
+## 글꼴
+
+글꼴은 외부 서버가 아니라 `assets/fonts`에서 불러옵니다. 행사장 네트워크가 구글 글꼴 서버를 막아도 같은 글씨가 나옵니다. 파일은 자주 쓰는 한글 2,350자와 `index.html`에 실제로 나오는 글자만 남겨 줄인 것입니다. 쇼릴·트레일러 전용인 Black Han Sans와 Nanum Pen Script는 화면에 나오는 글자만 담았습니다.
+
+문구나 카드 내용을 고친 뒤 새 글자가 생기면 다시 만듭니다.
+
+```bash
+pip install fonttools brotli
+```
+
+```bash
+python3 tools/subset_fonts.py <Fontsource 패키지를 푼 폴더>
+```
+
+다섯 글꼴 모두 SIL Open Font License 1.1이며, 라이선스 전문은 `assets/fonts/licenses`에 있습니다.
+
+## 올리기 전 점검
+
+내용을 고치거나 연구회를 추가한 뒤에는 아래 점검을 돌립니다. 외부 네트워크를 막은 상태로 페이지를 열어, 카드 20장의 모든 단계·주제 화면(화면 크기 3종), 실제 클릭 경로, 트레일러 20개, 다크 모드, 움직임 줄이기, 3분 무입력 복귀를 확인합니다. 3~4분쯤 걸리고, 하나라도 어긋나면 `FAIL`로 표시됩니다.
+
+```bash
+npm install --no-save playwright
+```
+
+```bash
+npx playwright install chromium
+```
+
+```bash
+node tools/check.js
+```
+
+실제 디벗 화면의 터치감과 속도, 행사장 네트워크는 이 점검으로 확인되지 않으니 현장 기기에서 한 번 직접 눌러 보아야 합니다.
