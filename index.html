@@ -386,7 +386,17 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 /* 결과 */
 .result{display:grid;grid-template-columns:minmax(200px,250px) 1fr;gap:clamp(16px,3vw,28px);align-items:start}
 @media (max-width:640px){.result{grid-template-columns:1fr}.result .cardslot{max-width:230px;margin:0 auto}}
-.code{font-family:var(--f-display);font-size:clamp(40px,5vw,57.5px);color:var(--berry);letter-spacing:.2em;line-height:1}
+.typename{font-size:clamp(26px,3.4vw,38px);color:var(--berry);line-height:1.25}
+.tag i{font-style:normal;font-family:var(--f-mono);font-size:.82em;letter-spacing:.12em;opacity:.7;margin-right:2px}
+.panel.fit{border-color:var(--gold);background:var(--gold-soft)}
+.fit-kind{font-family:var(--f-display);font-weight:700;font-size:clamp(21px,2.4vw,27px);margin:0}
+.fit-kind span{color:var(--gold-deep);margin:0 .15em}
+.panel.fit p{margin:0}
+.fit-ex{font-size:16px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px}
+.fit-ex b{font-family:var(--f-mono);font-weight:500;font-size:12px;letter-spacing:.14em;color:var(--gold-deep);margin-right:6px}
+.fitline{font-size:16.5px;line-height:1.6}
+.fitline b{color:var(--berry);margin-right:4px}
+.fitline span{display:block;color:var(--muted);font-size:15px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .axis{display:grid;gap:5px}
 .axis .names{display:flex;justify-content:space-between;align-items:baseline;font-size:17.5px;gap:8px}
@@ -541,11 +551,11 @@ const AX=[
   ["연구 질문이 학생의 한마디나 수업에서 막힌 장면에서 떠오르는 편이다.","논문이나 이론을 읽다가 ‘이걸 교실에 적용하면?’ 하고 떠오르는 편이다."],
   ["개념 정의가 덜 끝나도 일단 교실 상황을 관찰하러 나선다.","용어와 이론 틀을 먼저 정리해야 마음이 놓인다."],
   ["주제가 좋은지는 우리 반 학생에게 통하는지로 판단한다.","주제가 좋은지는 기존 연구와의 연결과 학문적 의미로 판단한다."]]},
- {key:"제작",A:["제","제작형"],B:["정","정련형"],items:[
+ {key:"제작",A:["제","제작형"],B:["정","개선형"],items:[
   ["완성도가 낮아도 시제품을 만들어 일단 수업에서 돌려 본다.","충분히 검토된 뒤에야 수업에 투입한다."],
   ["기존 모형이 있어도 우리 상황에 맞춰 새로 짜는 쪽이 편하다.","검증된 모형을 가져와 조금씩 조정하는 쪽이 편하다."],
   ["수업이 끝나면 도구나 활동지를 크게 바꾸는 일이 잦다.","처음 설계를 크게 바꾸기보다 세부를 다듬는 일이 잦다."]]},
- {key:"확인",A:["서","서사 증거"],B:["수","수치 증거"],items:[
+ {key:"확인",A:["서","이야기 증거형"],B:["수","수치 증거형"],items:[
   ["효과를 말할 때 학생의 발언과 산출물 사례가 먼저 떠오른다.","효과를 말할 때 사전·사후 점수와 비교 결과가 먼저 떠오른다."],
   ["수치가 오르지 않아도 학생의 태도 변화가 보이면 의미 있다고 본다.","변화가 수치로 확인되어야 의미 있다고 본다."],
   ["보고서에서 가장 힘을 주는 부분은 장면 묘사와 학생의 목소리다.","보고서에서 가장 힘을 주는 부분은 표와 그래프 같은 분석이다."]]},
@@ -555,14 +565,42 @@ const AX=[
   ["연구회 모임에서는 자료를 바꿔 보고 협업하는 시간이 길다.","연구회 모임에서는 각자 맡은 주제를 깊게 발표하고 논의하는 시간이 길다."]]}
 ];
 const QS=[];AX.forEach((a,ai)=>a.items.forEach((it,ii)=>QS.push({ai,A:it[0],B:it[1],flip:(ai+ii)%2===1})));
-const SW={장:"장면형",념:"개념형",제:"제작형",정:"정련형",서:"서사 증거",수:"수치 증거",나:"공유형",심:"심화형"};
-const ST={장:"학생의 실제 어려움에서 출발해 연구가 교실과 멀어지지 않습니다.",념:"개념의 뼈대를 먼저 세워 연구의 방향이 흔들리지 않습니다.",제:"시제품을 빠르게 만들어 교실에서 바로 시험합니다.",정:"기존 모형의 빈틈을 알아보고 정교하게 다듬습니다.",서:"학생의 말과 결과물에서 점수로 잡히지 않는 변화를 읽어 냅니다.",수:"사전·사후 비교로 변화를 다른 사람에게도 설득력 있게 보여 줍니다.",나:"결과를 나누며 동료 교사의 교실로 연구를 넓힙니다.",심:"한 주제를 여러 번 돌려 보며 깊이를 쌓습니다."};
-const BL={장:"한 교실의 장면이 다른 교실에도 통하는지 확인해 보세요.",념:"개념이 실제 수업 장면에서 작동하는지 일찍 시험해 보세요.",제:"만든 도구가 기존 연구와 무엇이 다른지 정리해 두세요.",정:"다듬은 뒤에는 우리 반만의 새로운 시도도 한 가지 넣어 보세요.",서:"장면 몇 개를 수치로도 받쳐 주면 설득력이 커집니다.",수:"수치 뒤에 있는 학생의 말을 한두 개 곁들여 보세요.",나:"나눈 뒤에는 한 주제를 끝까지 파 볼 시간도 확보해 보세요.",심:"깊이 판 결과를 동료에게 미리 보여 주면 방향을 잡기 쉽습니다."};
-const ROLE={"장제":"현장 개척자","장정":"교실 관찰자","념제":"모형 설계자","념정":"개념 정련가"};
-const MOD={"서나":"이야기를 나누는","서심":"이야기를 파고드는","수나":"숫자로 함께 확인하는","수심":"숫자로 깊이 확인하는"};
+/* 글자(장·념·제·정·서·수·나·심)는 내부 계산용 키입니다. 화면에는 아래의 말로만 보여 줍니다. */
+const SW={장:"장면형",념:"개념형",제:"제작형",정:"개선형",서:"이야기 증거형",수:"수치 증거형",나:"공유형",심:"심화형"};
+/* 특성 하나하나에 맞는 연구: [무엇이 잘 맞는가, 이렇게 시작] */
+const FIT={
+ 장:["교실에서 막힌 장면을 연구 질문으로 바꾸는 연구가 잘 맞습니다.","수업 일지와 관찰 기록에서 반복되는 장면을 하나 골라 질문으로 적어 보세요."],
+ 념:["이론과 선행 연구에서 설계 원리를 뽑아 수업으로 옮기는 연구가 잘 맞습니다.","관심 개념의 선행 연구 서너 편을 읽고 수업에 쓸 원리를 정리해 보세요."],
+ 제:["수업 도구나 프로그램을 직접 만들어 고쳐 가는 개발 연구가 잘 맞습니다.","한 차시용 작은 시제품을 만들어 써 보고, 두세 번 고친 과정을 남겨 보세요."],
+ 정:["검증된 수업 모형을 우리 학년과 교과에 맞게 적용하는 연구가 잘 맞습니다.","모형 하나를 골라 무엇을 왜 바꿨는지 차시마다 기록해 보세요."],
+ 서:["학생의 말과 산출물, 수업 장면을 모아 읽는 질적 연구가 잘 맞습니다.","면담과 관찰 기록, 활동지를 모아 변화가 드러난 장면을 찾아보세요."],
+ 수:["사전·사후 검사와 설문으로 변화를 비교하는 효과 검증 연구가 잘 맞습니다.","무엇을 잴지와 측정 도구를 수업보다 먼저 정해 보세요."],
+ 나:["여러 학급과 학교가 같은 수업을 적용해 보는 공동 연구가 잘 맞습니다.","연구회에서 수업안과 자료를 나누고 서로의 교실 결과를 견주어 보세요."],
+ 심:["한 주제를 여러 번 적용하며 깊이를 더하는 심화 연구가 잘 맞습니다.","같은 질문으로 다음 학기 수업을 다시 설계해 변화를 이어서 살펴보세요."]};
+/* 출발 + 제작 → 연구의 종류 */
+const ROLE={"장제":"현장 실행 연구자","장정":"수업 개선 연구자","념제":"설계·개발 연구자","념정":"모형 적용 연구자"};
+const KIND={"장제":"실행연구","장정":"수업 개선 연구","념제":"설계·개발 연구","념정":"모형 적용·검증 연구"};
+const ROLE_REC={
+ "장제":"우리 반의 문제에서 출발해 수업과 도구를 직접 만들어 적용하고, 돌아보며 다시 고치는 실행연구가 잘 맞습니다.",
+ "장정":"교실의 문제에 맞는 검증된 수업 모형을 골라 우리 학생에게 맞게 조정해 가는 수업 개선 연구가 잘 맞습니다.",
+ "념제":"이론에서 설계 원리를 세우고 새 수업 모형이나 도구를 만들어 현장에서 다듬는 설계·개발 연구가 잘 맞습니다.",
+ "념정":"선행 연구의 모형을 다른 학년·교과에 적용해 같은 효과가 나는지 확인하는 모형 적용·검증 연구가 잘 맞습니다."};
+const ROLE_EX={
+ "장제":"학생이 AI의 답을 그대로 옮겨 적는 장면 → 답을 따져 보는 활동지를 만들어 세 차시에 걸쳐 고쳐 가기",
+ "장정":"모둠 활동에서 몇몇 학생만 참여하는 장면 → 검증된 협력학습 모형을 우리 반 AI 수업에 맞게 조정하기",
+ "념제":"설명 가능한 AI 개념 → 근거를 묻는 수업의 설계 원리를 세우고 수업 모형으로 개발하기",
+ "념정":"다른 학교급에서 효과가 확인된 AI 리터러시 수업 → 우리 학년에 적용해 같은 변화가 나타나는지 확인하기"};
+/* 확인 + 확장 → 증거를 모으고 넓히는 방식 */
+const MOD={"서나":"사례를 나누는","서심":"장면을 깊이 읽는","수나":"데이터로 넓히는","수심":"효과를 검증하는"};
+const WAY={"서나":"사례 공유","서심":"질적 심층","수나":"수치 확산","수심":"효과 검증"};
+const MOD_REC={
+ "서나":"학생의 말과 산출물을 수업 사례로 정리해 연구회에서 나누면, 연구가 다른 교실로 이어집니다.",
+ "서심":"적은 수의 학생을 면담과 관찰로 오래 따라가면, 점수로는 보이지 않는 변화의 이유가 드러납니다.",
+ "수나":"사전·사후 결과를 여러 학급에서 함께 모으면, 수업이 어디까지 통하는지 보여 줄 수 있습니다.",
+ "수심":"비교 집단을 두거나 여러 번 측정하면, 한 수업의 효과를 설득력 있게 확인할 수 있습니다."};
 const TYPE_SYM={"장제":SYMS[0],"장정":SYMS[1],"념제":SYMS[3],"념정":SYMS[4]};
 const typeName=t=>MOD[t[2]+t[3]]+" "+ROLE[t[0]+t[1]];
-const words=t=>[...t].map(k=>`<span class="tag">${SW[k]}</span>`).join("");
+const words=t=>[...t].map((k,i)=>`<span class="tag"><i>${AX[i].key}</i> ${SW[k]}</span>`).join("");
 const START={장:"교실에서 가장 막히는 장면을 먼저 기록하고",념:"관련 개념과 선행 연구를 먼저 정리하고"};
 const MAKE={제:"작은 시제품을 만들어 한 차시에 써 보고",정:"검증된 모형 하나를 골라 우리 반에 맞게 다듬고"};
 const CHECK={서:"학생의 말과 산출물을 모아 읽고",수:"사전·사후 문항으로 변화를 비교하고"};
@@ -910,14 +948,19 @@ function render(){
   if(S.qi<QS.length){ buildQuiz(el);
   } else {
    const sc=score(), t=sc.map(x=>x.letter).join("");
-   const me={id:0,sym:TYPE_SYM[t[0]+t[1]],face:["#1C2E4A","#F1DFA6"],group:typeName(t),level:null};
+   const rk=t[0]+t[1], mk2=t[2]+t[3];
+   const me={id:0,sym:TYPE_SYM[rk],face:["#1C2E4A","#F1DFA6"],group:typeName(t),level:null};
    el.innerHTML=`<span class="eyebrow">${stepNo(4)} · Type · 나의 연구 유형</span>
-   <div class="result"><div class="cardslot"><div class="tarot-card" style="${faceStyle(me)}" aria-hidden="true"><span class="halo"></span><span class="shine"></span><span class="num">MY RESEARCH TYPE</span><span class="sym">${me.sym}</span><span class="ttl">${typeName(t)}<small>${t}</small></span><span class="gloss"></span></div></div>
-   <div class="tarot-body"><div class="code">${t}</div><h2>${typeName(t)}</h2><div>${words(t)}</div>
-   <div class="panel">${AX.map((a,j)=>{const x=sc[j];const w=50*x.pct/100;
+   <div class="result"><div class="cardslot"><div class="tarot-card" style="${faceStyle(me)}" aria-hidden="true"><span class="halo"></span><span class="shine"></span><span class="num">MY RESEARCH TYPE</span><span class="sym">${me.sym}</span><span class="ttl">${ROLE[rk]}<small>${KIND[rk]} · ${WAY[mk2]}</small></span><span class="gloss"></span></div></div>
+   <div class="tarot-body"><div class="label">나의 연구 방식</div><h2 class="typename">${typeName(t)}</h2><div>${words(t)}</div>
+   <div class="panel fit"><div class="label">Recommended · 이런 연구가 잘 맞아요</div>
+     <p class="fit-kind">${KIND[rk]} <span>×</span> ${WAY[mk2]}</p>
+     <p>${ROLE_REC[rk]} ${MOD_REC[mk2]}</p>
+     <p class="fit-ex"><b>예를 들면</b> ${ROLE_EX[rk]}</p></div>
+   <div class="panel"><div class="label">By trait · 특성별로 보면</div>${AX.map((a,j)=>{const x=sc[j];const w=50*x.pct/100;
      return `<div class="axis"><div class="names"><span class="${x.side>0?'win':''}">${a.A[1]}</span><span class="mini">${a.key}${x.close?" · 경계":""}</span><span class="${x.side<0?'win':''}">${a.B[1]}</span></div>
      <div class="meter"><i style="${x.side>0?`right:50%;width:${w}%`:`left:50%;width:${w}%`}"></i></div>
-     <div class="mini">${ST[x.letter]} ${BL[x.letter]}</div></div>`}).join("")}</div>
+     <div class="fitline"><b>${SW[x.letter]}</b> ${FIT[x.letter][0]} <span>${FIT[x.letter][1]}</span></div></div>`}).join("")}</div>
    <p class="mini">축마다 문항 3개의 응답을 합산한 결과입니다. ‘경계’는 두 쪽이 거의 비슷하다는 뜻이며, 연구 상황에 따라 반대쪽으로 움직일 수 있습니다. 심리검사가 아니라 연구 방식을 돌아보는 도구입니다.</p>
    <div class="row"><button class="btn" id="n">다음 연구 추천 보기 →</button><button class="btn ghost" id="rt">다시 해 보기</button></div></div></div>`;
    $("n").onclick=()=>go(5); $("rt").onclick=()=>{S.resp=[];S.qi=0;render();};
