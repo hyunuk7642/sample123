@@ -1,0 +1,10 @@
+# 점검용으로 설치한 것
+node_modules/
+package-lock.json
+
+# 구글 폼 응답에는 대표교사 성함·이메일이 있으므로 저장소에 넣지 않습니다
+*.csv
+*.xlsx
+
+__pycache__/
+.DS_Store
