@@ -28,7 +28,7 @@
   --paper:#F4ECDD; --card:#FBF6EC; --card-2:#F1E7D2; --ink:#1E2A23; --muted:#5E6A61; --line:#D8CBAF; --line-soft:#E8DFC9;
   --pine:#154431; --pine-deep:#0C2B1F; --pine-soft:#DCE8DF; --pine-ink:#F3EEDF;
   --berry:#A21F32; --berry-deep:#731423; --berry-soft:#F5DEDF;
-  --gold:#C49A3C; --gold-deep:#8F6B1E; --gold-light:#EBD59B; --gold-soft:#F6ECD0;
+  --gold:#C49A3C; --gold-deep:#836118; --gold-light:#EBD59B; --gold-soft:#F6ECD0;   /* gold-deep은 작은 라벨 글자색: 양피지 바탕에서 대비 4.5:1 이상 */
   --candle:#F6C97E; --snow:#FFFFFF;
   --shadow:0 14px 40px rgba(20,35,25,.22);
   --f-display:"Gowun Batang","Nanum Myeongjo","Batang",serif;
@@ -53,8 +53,9 @@
   color-scheme:dark}
 
 *{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--f-body);font-size:20px;line-height:1.65;
+/* 여러 사람이 이어 쓰는 전시용 화면: 두 손가락 확대와 당겨서 새로고침을 막아 다음 관람객이 틀어진 화면을 만나지 않게 하고, 길게 눌러도 글자 선택·메뉴가 뜨지 않게 합니다 */
+html{scroll-padding-top:env(safe-area-inset-top,0px);touch-action:pan-x pan-y;overscroll-behavior-y:contain}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;margin:0;min-height:100vh;color:var(--ink);font-family:var(--f-body);font-size:20px;line-height:1.65;
   -webkit-font-smoothing:antialiased;overflow-x:hidden;word-break:keep-all;overflow-wrap:break-word;
   background:
    radial-gradient(ellipse 80% 40% at 50% -5%,rgba(246,201,126,.18),transparent 60%),
@@ -492,8 +493,9 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 
 <script>
 /* ============================================================
-   데이터: 2026 AI-E랩 교사연구회 20곳 (명단 시트 기준)
-   detail은 포스터 수합 후 채웁니다. type(4글자)은 수합 후 입력하면 MBTI 추천에 쓰입니다.
+   데이터: 2026 AI-E랩 교사연구회 20곳 (명단 시트 기준, 순서는 폼 드롭다운과 같음)
+   G의 학교급·주제는 응답이 없을 때만 쓰는 임시 값입니다. 20곳 모두 응답을 냈으므로 실제 값은 아래 DETAILS에서 옵니다.
+   연구회별 연구 유형(type)은 수합하지 않아 비어 있고, 그래서 추천은 주제와 학교급으로만 고릅니다.
    ============================================================ */
 const TOPIC={mind:"마음·윤리·사회정서",algo:"AI 원리·알고리즘·데이터",create:"창작·표현",sdg:"융합·지속가능",sim:"과학·피지컬·XR",incl:"모두를 위한 AI"};
 const TOPIC_EN={mind:"Heart & Ethics",algo:"Thinking & Algorithm",create:"Create & Express",sdg:"Fusion & Sustain",sim:"Simulation & XR",incl:"AI for All"};
@@ -645,6 +647,10 @@ const BOB=["--bd:0s;--br:-1.2deg","--bd:1.4s;--br:0deg","--bd:2.6s;--br:1.2deg"]
 const CAPS=["첫 번째 카드를 뒤집어 보세요","두 번째 카드도 뒤집어 보세요","마지막 카드를 뒤집어 보세요","세 장이 모두 열렸습니다. 입학할 준비가 되었어요"];
 const flipped=new Set();
 const $=id=>document.getElementById(id);
+/* 터치에서는 덮개(쇼릴·트레일러)를 pointerdown으로 닫으면 뒤따르는 click이 그 아래 버튼에 떨어집니다.
+   덮개를 닫은 직후와 화면이 바뀐 직후의 click은 잠깐 삼켜, 누르지 않은 버튼이 눌리지 않게 합니다. */
+let eatUntil=0;const eatClicks=ms=>{eatUntil=Math.max(eatUntil,performance.now()+ms);};
+addEventListener("click",e=>{if(performance.now()<eatUntil){e.stopPropagation();e.preventDefault();}},true);
 
 function buildTrio(){
   $("trio").innerHTML=TRIO.map((c,i)=>`<div class="tslot" style="${BOB[i]}"><button class="tcard" data-i="${i}" style="--cf:${c.cf};--ct:${c.ct}" aria-pressed="false" aria-label="${c.n} ${c.name.replace(/<br>/g," ")} 카드 뒤집기">
@@ -719,7 +725,7 @@ function lightPath(W,H,start){
 }
 function enterApp(){
   if(entering)return;
-  const show=()=>{$("intro").hidden=true;$("app").hidden=false;document.body.classList.remove("mode-intro");S.step=0;S.card=null;render();window.scrollTo({top:0});setSnowDensity(40);};
+  const show=()=>{$("intro").hidden=true;$("app").hidden=false;document.body.classList.remove("mode-intro");S.step=0;S.card=null;render();window.scrollTo({top:0});setSnowDensity(40);armIdle();};
   if(REDUCE){show();return;}
   entering=true;
   const veil=$("veil"),flash=$("flash"),wc=$("wisp"),wx=wc.getContext("2d"),intro=$("intro"),app=$("app");
@@ -772,7 +778,7 @@ function enterApp(){
       flash.style.setProperty("--fx",L.x.toFixed(0)+"px");flash.style.setProperty("--fy",L.y.toFixed(0)+"px");flash.style.opacity=sstep((d-.55)/.45).toFixed(3);
       if(t>=1){
         /* 빛이 화면을 가득 채운 순간에 다음 화면으로 바꿈 */
-        swapAt=now;show();
+        swapAt=now;show();eatUntil=0;                       /* 긴 전환 끝이라 두 번 탭 걱정이 없으니, 새 화면은 곧바로 탭을 받음 */
         intro.classList.remove("flying","lit");intro.style.transform="";intro.style.removeProperty("--ui");
         wc.classList.remove("on");wx.globalCompositeOperation="source-over";wx.clearRect(0,0,W,H);
         veil.classList.remove("on");                       /* 새 화면이 보이는 순간부터 탭을 받음 */
@@ -793,7 +799,7 @@ function enterApp(){
 function backToIntro(){
   $("app").hidden=true;$("intro").hidden=false;document.body.classList.add("mode-intro");resetTrio();
   S.step=0;S.card=null;S.resp=[];S.qi=0;S.topic=null;
-  window.scrollTo({top:0});setSnowDensity(90);
+  window.scrollTo({top:0});setSnowDensity(90);armIdle();
 }
 $("enter").addEventListener("click",()=>{ if($("enter").getAttribute("aria-disabled")==="true"){ const nxt=[0,1,2].find(i=>!flipped.has(i)); if(nxt!==undefined){ $("trio").querySelector(`[data-i="${nxt}"]`).focus(); $("capTxt").textContent="카드를 모두 뒤집으면 입장할 수 있어요"; } return;} enterApp(); });
 $("skip").addEventListener("click",enterApp);
@@ -843,7 +849,7 @@ function go(n){S.step=n;render();window.scrollTo({top:0});}
 function stepBy(dir){const v=visSteps(),k=v.indexOf(S.step),n=v[Math.max(0,Math.min(v.length-1,(k<0?0:k)+dir))];go(n);}
 const nextOf=()=>{const v=visSteps();return v[v.indexOf(S.step)+1];};
 const faceStyle=c=>`--cf:${c.face[0]};color:${c.face[1]}`;
-const levelTxt=c=>{const L=c.level||"";if(L==="온라인")return "온라인학교";if(L.includes("·"))return L+" 연계";return (({초:"초등",중:"중등",고:"고등"})[L]||"")+"학교";};
+const levelTxt=c=>{const L=c.level||"";if(L==="온라인")return "온라인학교";if(L.includes("·"))return L+" 연계";return (({초:"초등",중:"중",고:"고등"})[L]||"")+"학교";};
 const topicTags=c=>c.topics.length?c.topics.map(k=>`<span class="tag">${TOPIC[k]}</span>`).join(""):`<span class="tag">주제 분류 예정</span>`;
 function cardHTML(c,extraClass=""){
   const art=artOf(c);
@@ -913,13 +919,18 @@ function answer(k,base){
   $("duo").classList.toggle("pickA",k<2);$("duo").classList.toggle("pickB",k>=2);
   knobTo(toL,toR,dir);
   setTimeout(()=>{
+    if(S.step!==4||$("app").hidden||!bal.isConnected){quiz.busy=false;return;}   /* 그사이 처음 화면으로 돌아갔으면 이 답은 버림(다음 관람객에게 넘어가지 않게) */
     S.resp.push({ai:q.ai,v});S.qi++;
     if(S.qi>=QS.length){render();return;}
     fillTo(S.qi);$("duo").classList.remove("pickA","pickB");knobNeutral();qText(true);
     setTimeout(()=>{quiz.busy=false;bal.classList.remove("busy");},260);
   },REDUCE?60:620);
 }
+/* 문항 화면에서 태블릿을 돌리면 저울 손잡이와 진행 막대의 위치(px)를 새 너비에 맞춰 다시 놓음 */
+addEventListener("resize",()=>{if($("app").hidden||S.step!==4||quiz.busy||!$("bal"))return;const g=qGeom(),c=g.pad+g.w/2;cancelAnimationFrame(quiz.raf);quiz.L=c-8;quiz.R=c+8;$("knob").style.left=quiz.L+"px";$("knob").style.width="16px";fillTo(S.qi);});
+addEventListener("contextmenu",e=>e.preventDefault());            /* 길게 눌렀을 때 '이미지 저장' 같은 메뉴가 뜨지 않게 */
 function render(){
+ eatClicks(300);                                                 /* 두 번 눌렀을 때 둘째 탭이 새 화면의 버튼을 누르지 않게 */
  rail(); const el=$("stage"),c=S.card;
  if(S.step===0){
   if(!c){
@@ -982,17 +993,21 @@ function render(){
    return;
   }
   const sc=score(), t=sc.map(x=>x.letter).join(""), tp=S.topic, hasType=S.resp.length===QS.length;
+  /* 추천: 첫 자리는 이 주제에 집중한 연구회(고른 주제 수가 적은 곳), 둘째 자리는 되도록 학교급이 다른 곳.
+     같은 조건 안에서는 뽑은 카드에 따라 순서를 돌려, 20곳이 고르게 소개되도록 합니다(번호순으로만 고르면 뒤 번호는 한 번도 안 나옴). */
   const pool=CARDS.filter(x=>x.id!==c.id&&x.topics.includes(tp));
   const fit=x=>x.type&&hasType?[...x.type].filter((ch,i)=>ch===t[i]).length:0;
-  pool.sort((x,y)=>fit(y)-fit(x)||x.id-y.id);
-  const first=pool[0], second=pool.find(x=>first&&x.level!==first.level)||pool[1];
+  const ti=Object.keys(TOPIC).indexOf(tp), rot=x=>(x.id+c.id*7+ti*3)%CARDS.length;
+  const first=pool.slice().sort((x,y)=>fit(y)-fit(x)||x.topics.length-y.topics.length||rot(x)-rot(y))[0];
+  const rest=pool.filter(x=>x!==first).sort((x,y)=>fit(y)-fit(x)||rot(x)-rot(y));
+  const second=first&&(rest.find(x=>x.level!==first.level)||rest[0]);
   const picks=[first,second].filter(Boolean);
   const mk=(x,l)=>`<div class="rec tilt">${artOf(x)?`<div class="mini-card art" style="background-image:url('${artOf(x)}')" aria-hidden="true"></div>`:`<div class="mini-card" style="${faceStyle(x)}" aria-hidden="true">${x.sym}</div>`}<div><div class="label">${l}</div><h3>${x.group}</h3><p class="mini">${levelTxt(x)} · ${x.topics.map(k=>TOPIC[k]).join(", ")||"주제 분류 예정"}</p></div></div>`;
   const plan=hasType?`${START[t[0]]} ${MAKE[t[1]]} ${CHECK[t[2]]} ${SPREAD[t[3]]}`:null;
   const L=LINKS[tp];
   el.innerHTML=`<span class="eyebrow">${stepNo(5)} · Next · 다음 연구</span><h1>다음 연구 추천</h1>
-   <p class="lead">‘${TOPIC[tp]}’에 관심 있는 ${hasType?typeName(t)+"께":"선생님께"} 맞는 연구회입니다.</p>
-   ${picks.length?`<div class="recs">${picks.map((x,i)=>mk(x,i?"학교급이 다른 연구회":"주제가 맞는 연구회")).join("")}</div>`:`<div class="empty">이 주제로 분류된 다른 연구회가 아직 없습니다.</div>`}
+   <p class="lead">‘${TOPIC[tp]}’에 관심 있는 ${hasType?typeName(t)+"께":"선생님께"} 소개하는 연구회입니다.</p>
+   ${picks.length?`<div class="recs">${picks.map((x,i)=>mk(x,!i?"주제가 맞는 연구회":x.level!==first.level?"학교급이 다른 연구회":"함께 보면 좋은 연구회")).join("")}</div>`:`<div class="empty">이 주제로 분류된 다른 연구회가 아직 없습니다.</div>`}
    <div class="panel"><div><div class="label">Research Questions · 내가 해 볼 만한 연구 질문</div><ul style="margin:0;padding-left:20px">${ASK[tp].map(x=>`<li>${x}</li>`).join("")}</ul></div>
      ${plan?`<div><div class="label">How to start · ${typeName(t)}의 시작 방법</div><div>${plan}</div></div>`:""}</div>
    <div class="panel"><div class="label">Next stop · 다음에 가 볼 곳</div><b style="font-family:var(--f-display);font-size:17px">${L.t}</b><span class="mini">${L.d}</span></div>
@@ -1040,8 +1055,8 @@ if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
 /* 본 화면은 3분, 시작 화면은 1분 동안 입력이 없으면 오프닝 쇼릴이 반복 재생됩니다(어트랙트 모드). 어디든 누르면 시작 화면으로. */
 let idle=0;
 function armIdle(){clearTimeout(idle);if(reel.on)return;
-  const ms=$("app").hidden===false?180000:60000;
-  idle=setTimeout(()=>{if($("app").hidden===false)backToIntro();startReel(true);},ms);}
+  const ms=$("app").hidden===false?180000:60000;                /* 입장할 때와 처음으로 돌아갈 때도 다시 걸어, 지금 보이는 화면의 시간이 적용됩니다 */
+  idle=setTimeout(()=>{if($("app").hidden===false)backToIntro();else resetTrio();startReel(true);if(reel.on)clearTimeout(idle);},ms);}
 ["pointerdown","keydown","touchstart","scroll"].forEach(e=>addEventListener(e,armIdle,{passive:true}));
 
 /* ============================================================
@@ -1064,7 +1079,7 @@ function startReel(loop){
   $("intro").hidden=true;document.body.classList.remove("mode-intro");
   sizeReel();addEventListener("resize",sizeReel);
   const go=()=>{reel.t0=performance.now();cancelAnimationFrame(reel.raf);reel.raf=requestAnimationFrame(reelFrame);};
-  if(document.fonts&&document.fonts.load){Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('40px "Nanum Pen Script"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A")]),new Promise(r=>setTimeout(r,1500))]).then(go);}else go();
+  if(document.fonts&&document.fonts.load){Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('40px "Nanum Pen Script"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A")]),new Promise(r=>setTimeout(r,1500))]).then(go,go);}else go();   /* 글꼴을 못 받아도 멈추지 않고 대체 글꼴로 시작 */
 }
 function stopReel(){
   if(!reel.on)return;reel.on=false;cancelAnimationFrame(reel.raf);removeEventListener("resize",sizeReel);
@@ -1072,7 +1087,9 @@ function stopReel(){
   $("intro").hidden=false;document.body.classList.add("mode-intro");resetTrio();window.scrollTo({top:0});setSnowDensity(90);
   setTimeout(()=>{r.hidden=true;},520);armIdle();
 }
-$("reel").addEventListener("pointerdown",e=>{e.stopPropagation();stopReel();});
+$("reel").addEventListener("pointerdown",e=>{e.stopPropagation();eatClicks(450);stopReel();});
+/* 키보드만 쓰는 PC에서도 쇼릴·트레일러를 넘길 수 있게 */
+addEventListener("keydown",e=>{if(e.key!=="Escape"&&e.key!=="Enter"&&e.key!==" ")return;if(reel.on){e.preventDefault();eatClicks(450);stopReel();}else if(tr.on){e.preventDefault();eatClicks(450);stopTrailer();}});
 function reelFrame(now){
   if(!reel.on)return;
   let t=Math.max(0,(now-reel.t0)/1000);
@@ -1295,13 +1312,14 @@ function startTrailer(card){
   tr.on=true;tr.card=card;tr.script=SCRIPTS[card.group]||autoScript(card);tr.acc=ACC[tr.script.c]||ACC.lime;
   const voice=get(card,"learn","학생의 목소리");                       /* 비트별로 그 연구회가 실제로 낸 항목인지 */
   tr.has=[true,true,true,!!get(card,"field","활동"),!!get(card,"field","시행착오"),!!(voice&&!/예정|전으로/.test(voice)),!!get(card,"learn","나타난 변화"),true];
-  clearTimeout(tr.hideT);$("trailer").hidden=false;$("trailer").classList.remove("out");
-  const c=$("trailerc"),d=devicePixelRatio||1;tr.W=innerWidth;tr.H=innerHeight;c.width=tr.W*d;c.height=tr.H*d;tr.ctx=c.getContext("2d");tr.ctx.setTransform(d,0,0,d,0,0);tr.u=Math.min(tr.W,tr.H)/900;
+  clearTimeout(tr.hideT);$("trailer").hidden=false;$("trailer").classList.remove("out");tr.opened=performance.now();
+  sizeTrailer();addEventListener("resize",sizeTrailer);                                  /* 재생 중 태블릿을 돌려도 찌그러지지 않게 */
   const go=()=>{tr.t0=performance.now();cancelAnimationFrame(tr.raf);tr.raf=requestAnimationFrame(trFrame);};
-  if(document.fonts&&document.fonts.load)Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A")]),new Promise(r=>setTimeout(r,800))]).then(go);else go();
+  if(document.fonts&&document.fonts.load)Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A")]),new Promise(r=>setTimeout(r,800))]).then(go,go);else go();
 }
-function stopTrailer(){ if(!tr.on)return;tr.on=false;cancelAnimationFrame(tr.raf);const el=$("trailer");el.classList.add("out");clearTimeout(tr.hideT);tr.hideT=setTimeout(()=>{el.hidden=true;},480);armIdle(); }
-$("trailer").addEventListener("pointerdown",e=>{e.stopPropagation();stopTrailer();});
+function sizeTrailer(){const c=$("trailerc"),d=devicePixelRatio||1;tr.W=innerWidth;tr.H=innerHeight;c.width=tr.W*d;c.height=tr.H*d;tr.ctx=c.getContext("2d");tr.ctx.setTransform(d,0,0,d,0,0);tr.u=Math.min(tr.W,tr.H)/900;}
+function stopTrailer(){ if(!tr.on)return;tr.on=false;cancelAnimationFrame(tr.raf);removeEventListener("resize",sizeTrailer);const el=$("trailer");el.classList.add("out");clearTimeout(tr.hideT);tr.hideT=setTimeout(()=>{el.hidden=true;},480);armIdle(); }
+$("trailer").addEventListener("pointerdown",e=>{e.stopPropagation();if(performance.now()-tr.opened<450)return;eatClicks(450);stopTrailer();});   /* 카드를 두 번 눌러도 트레일러가 바로 꺼지지 않게, 열린 직후의 탭은 무시 */
 function trFrame(now){ if(!tr.on)return;const t=Math.max(0,(now-tr.t0)/1000);if(t>=tr.T){stopTrailer();return;}drawTrailer(t);tr.raf=requestAnimationFrame(trFrame); }
 
 /* ---- 그리기 도구 ---- */
@@ -1418,7 +1436,9 @@ function fxGlitch(b,s,d){ /* 글리치·입자 흩어짐 → 다시 모여 새 �
   const g=tr.ctx,{W,H,u}=tr,A=tr.acc;fill(TP.deep);tr.light=false;
   const k1=d*.42,k2=d*.6;
   if(s<k1){const jit=clamp((s-k1*.5)/(k1*.5));bigText(b.a,s,{color:TP.cream,start:0});
-    if(jit>0){for(let i=0;i<4;i++){const y=H*rnd1(i+Math.floor(s*30)),h=H*.025*rnd1(i+3),dx=(rnd1(i+Math.floor(s*25))-.5)*34*u*jit;const img=g.getImageData(0,Math.max(0,y)*devicePixelRatio,tr.W*devicePixelRatio,Math.max(1,h*devicePixelRatio));g.putImageData(img,dx*devicePixelRatio,Math.max(0,y)*devicePixelRatio);}
+    if(jit>0){const cv=g.canvas,dp=devicePixelRatio||1;g.save();g.setTransform(1,0,0,1,0,0);   /* 가로 띠를 옆으로 밀어 그림(픽셀을 읽어 오지 않아 태블릿에서도 가벼움) */
+      for(let i=0;i<4;i++){const y=Math.floor(Math.max(0,H*rnd1(i+Math.floor(s*30)))*dp),h=Math.max(1,Math.ceil(H*.025*rnd1(i+3)*dp)),dx=Math.round((rnd1(i+Math.floor(s*25))-.5)*34*u*jit*dp);g.drawImage(cv,0,y,cv.width,h,dx,y,cv.width,h);}
+      g.restore();
       g.fillStyle=`rgba(232,101,122,${.12*jit})`;g.fillRect(0,0,W,H);}}
   else if(s<k2){const p=(s-k1)/(k2-k1);for(let i=0;i<220;i++){const ang=rnd1(i)*Math.PI*2,r=eo(p)*Math.max(W,H)*(.3+rnd1(i+7)*.5),x=W/2+Math.cos(ang)*r,y=H/2+Math.sin(ang)*r*.7;g.fillStyle=[TP.candle,TP.mint,TP.pink,A.bg][i%4];g.globalAlpha=1-p;g.beginPath();g.arc(x,y,2.5*u,0,Math.PI*2);g.fill();}g.globalAlpha=1;}
   else{const ls=s-k2;for(let i=0;i<220;i++){const ang=rnd1(i)*Math.PI*2,r=(1-eo(ls/.5))*Math.max(W,H)*(.3+rnd1(i+7)*.5),x=W/2+Math.cos(ang)*r,y=H/2+Math.sin(ang)*r*.7;g.fillStyle=[TP.candle,TP.mint,TP.pink,A.bg][i%4];g.globalAlpha=clamp(1-ls/.5);g.beginPath();g.arc(x,y,2.5*u,0,Math.PI*2);g.fill();}g.globalAlpha=1;
