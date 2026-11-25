@@ -997,9 +997,10 @@ function render(){
      같은 조건 안에서는 뽑은 카드에 따라 순서를 돌려, 20곳이 고르게 소개되도록 합니다(번호순으로만 고르면 뒤 번호는 한 번도 안 나옴). */
   const pool=CARDS.filter(x=>x.id!==c.id&&x.topics.includes(tp));
   const fit=x=>x.type&&hasType?[...x.type].filter((ch,i)=>ch===t[i]).length:0;
-  const ti=Object.keys(TOPIC).indexOf(tp), rot=x=>(x.id+c.id*7+ti*3)%CARDS.length;
-  const first=pool.slice().sort((x,y)=>fit(y)-fit(x)||x.topics.length-y.topics.length||rot(x)-rot(y))[0];
-  const rest=pool.filter(x=>x!==first).sort((x,y)=>fit(y)-fit(x)||rot(x)-rot(y));
+  const k=c.id+Object.keys(TOPIC).indexOf(tp), spin=a=>a.map((_,i)=>a[(i+k)%a.length]);      /* 목록을 k칸 돌림 */
+  const best=Math.max(0,...pool.map(fit)), top=pool.filter(x=>fit(x)===best), few=Math.min(...top.map(x=>x.topics.length));
+  const first=spin(top.filter(x=>x.topics.length===few))[0];
+  const rest=spin(pool.filter(x=>x!==first)).sort((x,y)=>fit(y)-fit(x));                       /* 정렬이 안정적이라 돌린 순서가 유지됨 */
   const second=first&&(rest.find(x=>x.level!==first.level)||rest[0]);
   const picks=[first,second].filter(Boolean);
   const mk=(x,l)=>`<div class="rec tilt">${artOf(x)?`<div class="mini-card art" style="background-image:url('${artOf(x)}')" aria-hidden="true"></div>`:`<div class="mini-card" style="${faceStyle(x)}" aria-hidden="true">${x.sym}</div>`}<div><div class="label">${l}</div><h3>${x.group}</h3><p class="mini">${levelTxt(x)} · ${x.topics.map(k=>TOPIC[k]).join(", ")||"주제 분류 예정"}</p></div></div>`;
