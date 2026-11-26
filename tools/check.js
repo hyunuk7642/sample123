@@ -147,6 +147,17 @@ const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'
     for (const t of [1, 4, 7, 9, 12, 14.5, 16, 18.5]) await p.evaluate(tt => { cancelAnimationFrame(reel.raf); drawReel(tt); }, t);
     ok(a.on && !a.vid && a.started && !errs.length, '오프닝: 영상을 못 받아도 코드로 그린 바탕으로 시작됨', JSON.stringify(a) + ' ' + (errs[0] || '')); await ctx.close(); }
 
+  /* 8-3) 입장 전환: 영상이 있으면 영상으로, 못 받으면 코드 전환으로 입장되는지 */
+  for (const [label, block] of [['입장 전환: 영상으로 재생되고 여정 화면이 열림', false], ['입장 전환: 영상을 못 받아도 코드 전환으로 입장됨', true]]) {
+    const ctx = await browser.newContext({ viewport: { width: 1100, height: 820 } }), p = await ctx.newPage(), errs = []; p.on('pageerror', e => errs.push(e.message));
+    if (block) await p.route('**/enter.*', r => r.fulfill({ status: 404, body: '' }));
+    await p.goto(base); await p.waitForTimeout(900); await p.evaluate(() => { if (reel.on) stopReel(); }); await p.waitForTimeout(2200);
+    const ready = await p.evaluate(() => document.getElementById('enterv').readyState >= 3); await p.click('#skip'); await p.waitForTimeout(1600);
+    const mid = await p.evaluate(() => ({ t: document.getElementById('enterv').currentTime, appHidden: document.getElementById('app').hidden }));
+    await p.waitForFunction(() => !document.getElementById('app').hidden, null, { timeout: 9000 }); await p.waitForTimeout(1800);
+    const end = await p.evaluate(() => ({ flash: +getComputedStyle(document.getElementById('flash')).opacity, vop: +getComputedStyle(document.getElementById('enterv')).opacity, deck: document.querySelectorAll('[data-draw]').length }));
+    ok(ready === !block && (block ? mid.t === 0 : mid.t > .4) && mid.appHidden && end.flash === 0 && end.vop === 0 && end.deck === 7 && !errs.length, label, JSON.stringify({ ready, mid, end }) + ' ' + (errs[0] || '')); await ctx.close(); }
+
   /* 9) 원하는 연구회 보기: 목록에 20곳이 있고, 고르면 그 연구회의 트레일러와 입학 화면이 뜨는지 */
   { const { p, log } = await open({ viewport: { width: 1100, height: 820 } }); await toJourney(p);
     const closed = await p.evaluate(() => document.getElementById('pickList').hidden); await p.click('#pickBtn'); await p.waitForTimeout(700);
