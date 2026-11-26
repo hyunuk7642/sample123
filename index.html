@@ -1085,24 +1085,25 @@ function armIdle(){clearTimeout(idle);if(reel.on)return;
 
 /* ============================================================
    오프닝 쇼릴: 캔버스 한 장 위에서 모든 장면을 시간 t의 함수로 그립니다.
-   13초 · 8컷 · 연구회 트레일러와 같은 비트 엔진으로 그립니다(아래 REEL 대본). 화면을 채우는 큰 글씨와 직선 컷.
+   18초 · 끊기지 않는 한 흐름: 연구가 모이고 → 한 점으로 포개지고 → 하나의 여정으로 이어집니다(아래 오프닝 필름).
    ============================================================ */
-const reel={on:false,loop:false,t0:0,raf:0,T:13,W:0,H:0,u:1,ctx:null};
+const reel={on:false,loop:false,t0:0,raf:0,T:18,W:0,H:0,u:1,ctx:null};
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const eo=t=>1-Math.pow(1-clamp(t),3), ei=t=>Math.pow(clamp(t),3), eio=t=>{t=clamp(t);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
 const eback=t=>{t=clamp(t);const c=1.70158,c3=c+1;return 1+c3*Math.pow(t-1,3)+c*Math.pow(t-1,2);};
 const fD=(px,fam="Black Han Sans")=>`${px}px "${fam}","Gowun Batang",sans-serif`;
 const fH=px=>`${px}px "Nanum Pen Script","Gowun Batang",cursive`;
 const fM=px=>`${px}px "IBM Plex Mono",monospace`;
-function sizeReel(){const c=$("reelc"),d=devicePixelRatio||1;reel.W=innerWidth;reel.H=innerHeight;c.width=reel.W*d;c.height=reel.H*d;reel.ctx=c.getContext("2d");reel.ctx.setTransform(d,0,0,d,0,0);reel.u=Math.min(reel.W,reel.H)/900;}
+function sizeReel(){const c=$("reelc"),d=Math.min(devicePixelRatio||1,1.5);   /* 고해상도 태블릿에서도 끊기지 않게 배율을 1.5배로 제한 */
+reel.W=innerWidth;reel.H=innerHeight;c.width=reel.W*d;c.height=reel.H*d;reel.ctx=c.getContext("2d");reel.ctx.setTransform(d,0,0,d,0,0);reel.u=Math.min(reel.W,reel.H)/900;}
 function startReel(loop){
   if(REDUCE||reel.on)return;
   if(tr.on)stopTrailer();                                          /* 오프닝은 트레일러의 그리기 엔진을 함께 쓰므로 둘이 겹치지 않게 */
   reel.on=true;reel.loop=loop;reel.wrapped=false;$("reel").hidden=false;$("reel").classList.remove("out");$("reel").classList.add("dark");
   $("intro").hidden=true;document.body.classList.remove("mode-intro");
-  sizeReel();addEventListener("resize",sizeReel);
+  sizeReel();addEventListener("resize",sizeReel);reelAssets();
   const go=()=>{reel.t0=performance.now();cancelAnimationFrame(reel.raf);reel.raf=requestAnimationFrame(reelFrame);};
-  if(document.fonts&&document.fonts.load){Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('40px "Nanum Pen Script"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A")]),new Promise(r=>setTimeout(r,1500))]).then(go,go);}else go();   /* 글꼴을 못 받아도 멈추지 않고 대체 글꼴로 시작 */
+  if(document.fonts&&document.fonts.load){Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('40px "Nanum Pen Script"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A"),document.fonts.load('500 20px "IBM Plex Sans KR"',"연구A")]),new Promise(r=>setTimeout(r,1500))]).then(go,go);}else go();   /* 글꼴을 못 받아도 멈추지 않고 대체 글꼴로 시작 */
 }
 function stopReel(){
   if(!reel.on)return;reel.on=false;cancelAnimationFrame(reel.raf);removeEventListener("resize",sizeReel);
@@ -1119,90 +1120,158 @@ function reelFrame(now){
   if(t>=reel.T){ if(reel.loop){reel.t0=now;t=0;reel.wrapped=true;} else {stopReel();return;} }
   drawReel(t);reel.raf=requestAnimationFrame(reelFrame);
 }
-/* ---- 오프닝 대본 (13초 · 8컷): 연구회 트레일러와 같은 비트 엔진으로 그립니다. 화면을 채우는 큰 글씨, 직선 컷, 컷마다 충격. ---- */
-const REEL_T=[[0,1.5],[1.5,2.9],[2.9,4.7],[4.7,6.3],[6.3,7.9],[7.9,9.4],[9.4,10.8],[10.8,13]];
-const REEL=[
- {c:"lime",fx:"hook",l:["교실의","질문 하나가"],bubbles:true},
- {c:"lime",fx:"solid",l:["수업이","된다"]},
- {c:"coral",fx:"stack",a:["나의 결"],b:["우리의 겹"]},
- {c:"green",fx:"count",label:"교사연구회",from:0,to:20,dur:.8},
- {c:"violet",fx:"deck",l:["카드 한 장을","뽑으면"]},
- {c:"cyan",fx:"words",w:["설계","적용","배움"],steps:true},
- {c:"orange",fx:"typo",cap:"연구 MBTI",p:[["12문항"],["나의","연구 유형은?"]]},
- {c:"green",fx:"title",l:["AI-E랩 연구 여정"],sub:"나의 결, 우리의 겹"}
-];
-const REEL_CARD={id:7},REEL_HAS=[true,true,true,true,true,true,true,true];
-function drawReel(t){
-  /* 트레일러 엔진(tr)을 오프닝 캔버스에 물려 같은 효과 함수를 씁니다. 오프닝과 트레일러는 동시에 재생되지 않습니다(startReel이 트레일러를 먼저 끔). */
-  tr.ctx=reel.ctx;tr.W=reel.W;tr.H=reel.H;tr.u=reel.u;tr.card=REEL_CARD;tr.has=REEL_HAS;
-  let bi=REEL_T.findIndex(([a,b])=>t>=a&&t<b);if(bi<0)bi=REEL.length-1;
-  const [a,b]=REEL_T[bi],beat=REEL[bi];tr.acc=ACC[beat.c];
-  drawBeat(beat,t-a,b-a,bi);
-  $("reel").classList.toggle("dark",!tr.light);
-  reelUI(t,bi);
+/* ---- 오프닝 필름 (18초): 끊기지 않는 한 흐름으로, 연구가 모이고(결) → 한 점으로 포개지고(겹) → 하나의 여정으로 이어집니다. ----
+   1) 모이다 0~6.5초   카드 한 장에서 스무 장으로, 그 사이로 연구 기록 종이들이 모여듦(숫자가 함께 올라감)
+   2) 겹치다 6.5~9.5초 전부가 한 점의 빛으로 모이고, 고리가 겹겹이 퍼짐
+   3) 잇다   9.5~13.8초 스무 장이 둥글게 자리 잡아 여섯 주제와 이어지고, 한 장을 뽑으면 설계·적용·배움이 펼쳐짐
+   4) 맺다   13.8~18초  "질문이 수업이 된다." → 제목
+   모든 위치는 시간 t의 함수입니다(프레임 누적 없음). 카드는 연구회가 낸 실제 카드 그림을 작게 줄여 씁니다. */
+const REEL_CARD={id:7},REEL_HAS=[true,true,true,true,true,true,true,true],NS=96;
+const rnR=i=>{const x=Math.sin(i*91.7+13.3)*43758.5453;return x-Math.floor(x);};
+const lerp=(a,b,k)=>a+(b-a)*k, sm=(a,b,x)=>sstep((x-a)/(b-a));
+const fB=(px,w=500)=>`${w} ${px}px "IBM Plex Sans KR","Gowun Batang",sans-serif`, fS=(px,w=700)=>`${w} ${px}px "Gowun Batang",serif`;
+function reelAssets(){ /* 카드 그림을 작은 조각으로 미리 만들어 둠. 그림이 아직 안 온 카드는 뒷면으로 그림 */
+  if(reel.art)return;reel.art=[];
+  const mk=(w,h)=>{const c=document.createElement("canvas");c.width=w;c.height=h;return c;};
+  const b=mk(200,300),x=b.getContext("2d");x.fillStyle="#154431";x.beginPath();x.roundRect(0,0,200,300,16);x.fill();x.strokeStyle="#C49A3C";x.lineWidth=5;x.beginPath();x.roundRect(3,3,194,294,14);x.stroke();
+  x.strokeStyle="#EBD59B";x.lineWidth=1.5;x.beginPath();x.roundRect(16,16,168,268,9);x.stroke();x.fillStyle="#EBD59B";x.beginPath();for(let k=0;k<8;k++){const a=-Math.PI/2+k*Math.PI/4,r=k%2?14:48;x.lineTo(100+r*Math.cos(a),150+r*Math.sin(a));}x.closePath();x.fill();reel.back=b;
+  CARDS.forEach((c,i)=>{const src=artOf(c);if(!src)return;const im=new Image();im.onload=()=>{const s=mk(200,300),y=s.getContext("2d");y.beginPath();y.roundRect(0,0,200,300,16);y.clip();y.drawImage(im,0,0,200,300);y.strokeStyle="#C49A3C";y.lineWidth=5;y.beginPath();y.roundRect(2.5,2.5,195,295,14);y.stroke();reel.art[i]=s;};im.src=src;});
 }
-function reelUI(t,bi){
-  const g=reel.ctx,{W,H,u}=reel,pad=Math.max(22*u,18),col=tr.light?"rgba(30,42,35,.62)":"rgba(243,238,223,.6)",dim=tr.light?"rgba(30,42,35,.18)":"rgba(243,238,223,.2)";
-  const top=pad+(parseFloat(getComputedStyle(document.documentElement).paddingTop)||0),bot=H-pad-(parseFloat(getComputedStyle(document.documentElement).paddingBottom)||0);
-  g.save();g.font=fM(Math.max(10,11*u));g.fillStyle=col;g.textBaseline="top";g.textAlign="right";
-  g.fillText(`AI-E랩 · OPENING · ${String(bi+1).padStart(2,"0")} / ${String(REEL.length).padStart(2,"0")}`,W-pad,top);
-  const ff=String(Math.floor((t%1)*30)).padStart(2,"0"),ss=String(Math.floor(t)).padStart(2,"0");
-  g.textAlign="left";g.textBaseline="bottom";g.fillText(`00:00:${ss}:${ff}`,pad,bot);
-  /* 진행: 컷 여덟 칸이 차례로 차오름 */
-  const bw=Math.min(W*.34,300*u),x0=W-pad-bw,seg=bw/REEL.length;
-  REEL_T.forEach(([a,b],i)=>{g.fillStyle=dim;g.fillRect(x0+i*seg,bot-5,seg-3,3);const p=clamp((t-a)/(b-a));if(p>0){g.fillStyle=col;g.fillRect(x0+i*seg,bot-5,(seg-3)*p,3);}});
+function reelSheets(){ /* 연구 기록 종이 여섯 가지 */
+  const labs=["질문","수업안","활동지","학생의 말","데이터","성찰"],cols=[TP.berry,TP.gold,TP.holly,TP.pink,TP.mint,TP.navy];
+  reel.sheet=labs.map((lb,k)=>{const c=document.createElement("canvas");c.width=150;c.height=200;const x=c.getContext("2d");
+    x.fillStyle=k%2?"#F6ECD0":"#FBF6EC";x.beginPath();x.roundRect(0,0,150,200,8);x.fill();
+    x.fillStyle=cols[k];x.beginPath();x.roundRect(14,16,62,22,11);x.fill();x.fillStyle=k===1||k===3||k===4?TP.ink:"#FFF8E6";x.font='600 12.5px "IBM Plex Sans KR",sans-serif';x.textAlign="center";x.textBaseline="middle";x.fillText(lb,45,27.5);
+    x.fillStyle="rgba(30,42,35,.22)";for(let r=0;r<8;r++)x.fillRect(14,56+r*15,(r%3===2?74:122)-(k*7+r*11)%30,4);
+    if(k%2===0){x.strokeStyle=cols[k];x.lineWidth=3;x.lineJoin="round";x.beginPath();x.moveTo(18,186);x.lineTo(48,172);x.lineTo(82,180);x.lineTo(132,160);x.stroke();}
+    return c;});
+}
+function reelSpace(g,t){ /* 깊은 소나무빛 공간과 천천히 흐르는 금빛 먼지 */
+  const {W,H}=reel,r=g.createRadialGradient(W/2,H*.46,0,W/2,H*.46,Math.max(W,H)*.75);r.addColorStop(0,"#123A2A");r.addColorStop(.55,"#0A2319");r.addColorStop(1,"#04100B");g.fillStyle=r;g.fillRect(0,0,W,H);
+  g.fillStyle="#F6C97E";for(let i=0;i<70;i++){const x=(rnR(i)*W+t*(4+rnR(i+3)*10))%W,y=(rnR(i+200)*H+t*(2+rnR(i+5)*5))%H;g.globalAlpha=.12+.3*Math.abs(Math.sin(t*1.3+i));g.beginPath();g.arc(x,y,.6+rnR(i+9)*1.4,0,6.283);g.fill();}g.globalAlpha=1;
+}
+function reelCap(g,pre,em,al,y){ /* 자막: 산세리프 말 + 금색 명조 강조 */
+  if(al<=0)return;const {W,u}=reel,fs=Math.min(Math.max(17,36*u),W*.045);g.save();g.globalAlpha=al;g.textBaseline="middle";g.textAlign="left";g.shadowColor="rgba(4,16,11,.9)";g.shadowBlur=14*u;
+  g.font=fB(fs,500);const w1=g.measureText(pre).width;g.font=fS(fs*1.4);const w2=g.measureText(em).width,x0=W/2-(w1+w2)/2;
+  g.font=fB(fs,500);g.fillStyle=TP.cream;g.fillText(pre,x0,y);g.font=fS(fs*1.4);g.fillStyle=TP.candle;g.fillText(em,x0+w1,y-fs*.04);g.restore();
+}
+function reelMark(g,x,y,s,al,tt){ /* 겹 표식: 카드 세 장이 어긋나게 포개짐 */
+  if(s<=0||al<=0)return;const cols=[TP.mint,TP.candle,TP.pink];g.save();g.translate(x,y);g.globalAlpha=al;g.lineWidth=Math.max(1.5,s*.085);
+  for(let i=0;i<3;i++){const w=s*.62,h=s;g.save();g.translate((i-1)*s*.34,-Math.abs(i-1)*s*.05);g.rotate((i-1)*.15+Math.sin(tt*1.2+i)*.02);g.shadowColor=cols[i];g.shadowBlur=s*.4;
+    g.fillStyle="rgba(8,30,21,.9)";g.beginPath();g.roundRect(-w/2,-h/2,w,h,s*.1);g.fill();g.strokeStyle=cols[i];g.stroke();g.restore();}
+  g.fillStyle=TP.candle;g.beginPath();for(let k=0;k<8;k++){const a=-Math.PI/2+k*Math.PI/4,r=k%2?s*.05:s*.2;g.lineTo(r*Math.cos(a),r*Math.sin(a));}g.closePath();g.fill();g.restore();
+}
+/* 1) 모이다 */
+const CBORN=[.25,1.05,1.7,1.88,2.06];
+const bornOf=j=>j<20?(j<5?CBORN[j]:j<12?2.45+(j-5)*.1:3.25+(j-12)*.07):1.3+3.9*Math.log(1+(j-20))/Math.log(1+NS);
+function reelCloud(g,t,cx,cy,m){
+  const {W,H,u}=reel,f=m*1.15,D=lerp(2.1,3.5,sm(.9,5.4,t)),c=sm(6.4,7.55,t),cc=c*c,solo=sm(.9,2.2,t),items=[],wide=W>H?Math.min(1.7,W/H):1;   /* wide: 가로 화면에서는 옆으로 더 넓게 퍼져 화면을 메움 */
+  for(let j=0;j<20+NS;j++){const a=t-bornOf(j);if(a<=0)continue;const e=sstep(a),isCard=j<20,k0=j===0?solo:1;
+    const r=(isCard?.4+1.0*rnR(j+50):.4+1.75*Math.sqrt(rnR(j+50)))*k0*(1+(1-e)*2.4)*(1-cc),y=(rnR(j+90)-.5)*(isCard?1.7:2.9)*k0*(1-cc)+(1-e)*(rnR(j+31)-.5)*2;
+    const th=rnR(j)*6.283+t*.2+cc*5.5,z=r*Math.sin(th)*.8+D;if(z<.45)continue;                    /* 카메라 뒤로 넘어간 것은 그리지 않음 */
+    items.push({j,isCard,z,x:cx+r*Math.cos(th)*wide*f/z,y:cy+y*f/z,s:f/z*(1-.8*cc),e,th,al:e*(1-c*c*c)*clamp((z-.45)/.6)});}
+  items.sort((p,q)=>q.z-p.z);                                      /* 먼 것부터 */
+  for(const it of items){const sp=it.isCard?(reel.art[it.j]||reel.back):reel.sheet[it.j%reel.sheet.length],w=(it.isCard?.44:.25)*it.s,h=w*(it.isCard?1.5:4/3);
+    g.save();g.globalAlpha=it.al*(.98-.4*clamp((it.z-D)/1.9));g.translate(it.x,it.y);g.rotate((1-it.e)*(rnR(it.j+7)-.5)*3+(rnR(it.j+70)-.5)*.32+Math.sin(t*.8+it.j)*.04);
+    g.scale(.62+.38*Math.abs(Math.cos(it.th*.9+it.j)),1);g.drawImage(sp,-w/2,-h/2,w,h);g.restore();}
+  /* 사이사이 떠오르는 말 */
+  const word=(txt,a,b)=>{const al=sm(a,a+.3,t)*(1-sm(b-.3,b,t));if(al<=0)return;g.save();g.globalAlpha=al;g.font=fS(Math.min(m*.25,W*.26)*(1+.07*(t-a)/(b-a)));g.textAlign="center";g.textBaseline="middle";g.shadowColor="rgba(4,16,11,.9)";g.shadowBlur=34*u;g.fillStyle=TP.cream;g.fillText(txt,cx,cy);g.restore();};
+  word("질문.",1.0,2.3);word("수업.",2.3,3.6);word("배움.",3.6,4.9);
+  const ph=sm(4.9,5.4,t)*(1-sm(6.25,6.7,t));
+  if(ph>0){g.fillStyle=`rgba(4,16,11,${(.55*ph).toFixed(3)})`;g.fillRect(0,0,W,H);const s1=Math.min(m*.15,W*.13);g.save();g.globalAlpha=ph;g.textAlign="center";g.textBaseline="middle";
+    g.font=fB(s1*.42,500);g.fillStyle=TP.cream;g.fillText("교실마다",cx,cy-s1*.78);g.font=fS(s1);g.fillStyle=TP.candle;g.fillText("서로 다른 결",cx,cy+s1*.1);g.restore();}
+  /* 숫자: 모인 연구회 수 */
+  let n=0;for(let j=0;j<20;j++)if(bornOf(j)<=t)n++;const ca=sm(.2,.6,t)*(1-sm(6.2,6.6,t));
+  if(ca>0){const pad=Math.max(22*u,18),by=H-pad-36*u,tx=String(n).padStart(2,"0");g.save();g.globalAlpha=ca;g.textBaseline="alphabetic";g.textAlign="left";g.font=fD(Math.max(34,66*u));g.fillStyle=TP.cream;g.fillText(tx,pad,by);const w=g.measureText(tx).width;
+    g.font=fS(Math.max(15,27*u));g.fillStyle=TP.candle;g.fillText("연구회",pad+w+10*u,by);g.font=fM(Math.max(9,10*u));g.fillStyle="rgba(243,238,223,.55)";g.fillText(n<20?"AND COUNTING":"ALL TOGETHER",pad+w+11*u,by-Math.max(20,32*u));g.restore();}
+}
+/* 2) 겹치다 */
+function reelCore(g,t,cx,cy,m){
+  const {W,H,u}=reel,out=1-sm(9.25,9.7,t),gl=sm(6.5,7.45,t)*out*(1-.72*sm(7.45,8.3,t)),gr=m*(.05+.5*gl*gl);   /* 섬광 뒤에는 빛을 줄여 고리가 또렷하게 */
+  if(gl>0){const r=g.createRadialGradient(cx,cy,0,cx,cy,gr);r.addColorStop(0,`rgba(255,248,230,${gl.toFixed(3)})`);r.addColorStop(.2,`rgba(246,201,126,${(.7*gl).toFixed(3)})`);r.addColorStop(1,"rgba(246,201,126,0)");g.fillStyle=r;g.fillRect(cx-gr,cy-gr,gr*2,gr*2);}
+  if(t<7.45)return;
+  const s=t-7.45,K=24,cols=[TP.candle,TP.gold,TP.mint,TP.pink,TP.cream];
+  g.save();g.lineWidth=3*u;g.lineCap="round";                        /* 기울어진 고리가 겹겹이 퍼지며 서로 반대로 돎 */
+  for(let k=0;k<K;k++){const p=clamp((s-k*.025)/.9);if(p<=0)continue;const rx=m*(.13+.66*(k+1)/K)*eo(p)*(W>H?1.3:1);
+    g.strokeStyle=cols[k%5];g.globalAlpha=(.42+.55*(1-k/K))*out;g.setLineDash([(6+k*1.5)*u,(5+k)*u]);g.lineDashOffset=(k%2?1:-1)*s*(40+k*4)*u;g.beginPath();g.ellipse(cx,cy,rx,rx*.4,0,0,6.283);g.stroke();}
+  g.setLineDash([]);g.restore();
+  reelMark(g,cx,lerp(cy,H*.44,sm(9.0,9.6,t)),m*.19*eback(clamp(s/.5))*(1-.6*sm(9.0,9.7,t)),out,s);
+  reelCap(g,"스무 교실의 서로 다른 ","결",sm(7.65,7.9,t)*(1-sm(8.55,8.78,t)),cy+m*.36);
+  reelCap(g,"포개어 하나가 되는 ","겹",sm(8.78,9.0,t)*(1-sm(9.42,9.68,t)),cy+m*.36);
+}
+/* 3) 잇다 */
+function reelMap(g,t,cx,m){
+  const {W,H,u}=reel,land=W>H,cy=H*.44,rx=land?Math.min(W*.42,H*.8):W*.4,ry=land?H*.3:H*.31,cw=m*(land?.082:.1),pick=sm(11.8,12.6,t),dim=1-.74*pick,pos=[];
+  reelMark(g,cx,cy,m*.075,sm(9.4,9.9,t)*dim,t);
+  g.save();g.lineWidth=1.3*u;g.strokeStyle=TP.gold;                  /* 가운데에서 스무 갈래로 뻗는 선 */
+  for(let k=0;k<20;k++){const p=clamp((t-9.55-k*.045)/.65),a=-Math.PI/2+k/20*6.283,e=eback(p),x=cx+rx*Math.cos(a)*e,y=cy+ry*Math.sin(a)*e;pos.push({x,y,p});
+    if(p>0){g.globalAlpha=.3*p*dim;g.beginPath();g.moveTo(cx,cy);g.lineTo(x,y);g.stroke();}}
   g.restore();
+  const tk=Object.keys(TOPIC),tc=[TP.pink,TP.candle,TP.mint,TP.gold,TP.goldL,TP.cream],fs=Math.min(Math.max(12.5,20*u),W*.024);   /* 주제 여섯 갈래 */
+  tk.forEach((key,i)=>{const p=clamp((t-10.45-i*.1)/.45);if(p<=0)return;const a=-Math.PI/2+i*Math.PI/3,e=eback(p);
+    g.save();g.translate(cx+rx*.47*Math.cos(a),cy+ry*.52*Math.sin(a));g.scale(e,e);g.globalAlpha=clamp(p*2)*dim;g.font=fB(fs,600);const w=g.measureText(TOPIC[key]).width+fs*2.3,h=fs*2.1;
+    g.fillStyle="rgba(8,30,21,.92)";g.beginPath();g.roundRect(-w/2,-h/2,w,h,h/2);g.fill();g.lineWidth=1.4*u;g.strokeStyle=tc[i];g.stroke();
+    g.fillStyle=tc[i];g.beginPath();g.arc(-w/2+fs*.85,0,fs*.26,0,6.283);g.fill();g.fillStyle=TP.cream;g.textAlign="left";g.textBaseline="middle";g.fillText(TOPIC[key],-w/2+fs*1.45,1);g.restore();});
+  const card=(k,x,y,w,rot,sx,al)=>{g.save();g.globalAlpha=al;g.translate(x,y);g.rotate(rot);g.scale(sx,1);g.drawImage(reel.art[k]||reel.back,-w/2,-w*.75,w,w*1.5);g.restore();};
+  for(let k=1;k<20;k++){const q=pos[k];if(q.p>0)card(k,q.x,q.y,cw*(.3+.7*eo(q.p)),(1-eo(q.p))*1.3*(k%2?1:-1)+(k%2?.05:-.05),1,clamp(q.p*2)*dim);}
+  const q=pos[0];if(q.p<=0)return;                                   /* 맨 위 한 장이 뽑혀 앞으로 나오며 한 바퀴 돎 */
+  const bx=land?cx-W*.19:cx,by=land?cy:cy-H*.13,bw=m*(land?.3:.36),x=lerp(q.x,bx,pick),y=lerp(q.y,by,pick),w=lerp(cw*(.3+.7*eo(q.p)),bw,pick);
+  if(pick>0){const r=g.createRadialGradient(x,y,0,x,y,w*1.6);r.addColorStop(0,`rgba(246,201,126,${(.45*pick).toFixed(3)})`);r.addColorStop(1,"rgba(246,201,126,0)");g.fillStyle=r;g.fillRect(x-w*1.6,y-w*1.6,w*3.2,w*3.2);}
+  card(0,x,y,w,(1-eo(q.p))*-1.3,Math.max(.05,Math.abs(Math.cos(pick*6.283))),clamp(q.p*2));
+  [["설계","DESIGN"],["적용","FIELD"],["배움","LEARN"]].forEach(([ko,en],i)=>{const p=clamp((t-12.5-i*.22)/.5);if(p<=0)return;   /* 한 장에서 펼쳐지는 세 단계 */
+    const f2=Math.max(18,36*u),pw=f2*4.4,ph=f2*1.9,pcx=land?cx+W*.24:cx+(i-1)*W*.28,pcy=land?cy+(i-1)*H*.17:cy+H*.27;
+    const sx0=land?bx+bw/2:bx+(i-1)*bw*.3,sy0=land?by+(i-1)*bw*.25:by+bw*.75,ex0=land?pcx-pw/2:pcx,ey0=land?pcy:pcy-ph/2,e=eo(p/.6),ex=lerp(sx0,ex0,e),ey=lerp(sy0,ey0,e);
+    g.save();g.strokeStyle=TP.candle;g.globalAlpha=.65;g.lineWidth=1.6*u;g.beginPath();g.moveTo(sx0,sy0);
+    if(land)g.bezierCurveTo(lerp(sx0,ex,.5),sy0,lerp(sx0,ex,.5),ey,ex,ey);else g.bezierCurveTo(sx0,lerp(sy0,ey,.5),ex,lerp(sy0,ey,.5),ex,ey);g.stroke();g.restore();
+    const pe=eback(clamp((p-.5)/.5));if(pe<=0)return;
+    g.save();g.translate(pcx,pcy);g.scale(pe,pe);g.fillStyle=[TP.berry,TP.gold,TP.holly][i];g.beginPath();g.roundRect(-pw/2,-ph/2,pw,ph,ph/2);g.fill();
+    g.textAlign="center";g.textBaseline="middle";g.font=fB(f2,700);g.fillStyle=i===1?TP.ink:"#FFF8E6";g.fillText(ko,0,1);
+    g.font=fM(Math.max(9,11*u));g.fillStyle=TP.goldL;g.fillText("0"+(i+1)+" · "+en,0,-ph/2-Math.max(9,12*u));g.restore();});
+  reelCap(g,"한자리에 모인 ","스무 개의 연구",sm(10.0,10.3,t)*(1-sm(11.5,11.8,t)),H*.9);
+  reelCap(g,"카드 한 장을 뽑으면 ","한 연구의 여정",sm(12.0,12.3,t)*(1-sm(13.3,13.55,t)),H*.9);
 }
-/* ---- 오프닝 전용 효과 세 가지 ---- */
-function fxStack(b,s,d){ /* '결' 한 겹 → 색 겹이 어긋나게 포개지며 '겹' */
-  const g=tr.ctx,{W,H,u}=tr,A=tr.acc,k=d*.45,cols=[TP.berry,TP.gold,TP.holly,TP.navy,TP.mint];
-  if(s<k){fill(TP.deep);tr.light=false;
-    /* 흐르는 결(나뭇결 같은 가로 물결선) */
-    g.save();g.strokeStyle="rgba(243,238,223,.13)";g.lineWidth=2*u;for(let i=0;i<14;i++){const y=H*(.06+i*.068);g.beginPath();for(let x=0;x<=W;x+=16){const yy=y+Math.sin(x/90+i*.8+s*6)*8*u;x?g.lineTo(x,yy):g.moveTo(x,yy);}g.stroke();}g.restore();
-    bigText(b.a,s,{color:TP.cream,wf:.8,hf:.6,shadow:A.bg});
-  }else{
-    const ls=s-k,n=cols.length;fill(A.bg);vignette(true);tr.light=A.fg===TP.ink;
-    g.save();g.font=fD(10);const size=fitSize(g,b.b,W*.78,H*.56),lh=size*1.08;g.font=fD(size);g.textAlign="center";g.textBaseline="middle";
-    for(let i=n-1;i>=0;i--){const p=eback(clamp((ls-.03-(n-1-i)*.07)/.34));if(p<=0)continue;const off=(i+1)*13*u*p;
-      g.fillStyle=cols[i];g.globalAlpha=clamp(p*2);b.b.forEach((ln,j)=>g.fillText(ln,W/2+off,H/2+(j-(b.b.length-1)/2)*lh+off));}
-    g.restore();
-    bigText(b.b,ls,{color:A.fg,wf:.78,hf:.56,start:.04});
-    g.save();g.font=fM(12*u);g.fillStyle=A.fg;g.globalAlpha=.7;g.textAlign="center";g.textBaseline="bottom";g.fillText("교실마다 다른 결이 포개져 하나의 연구로",W/2,H*.9);g.restore();
-  }
-  snowDots(s,!tr.light);
+/* 4) 맺다 */
+function reelSay(g,s){
+  const {W,u}=reel;fill(TP.paper);vignette(false);
+  const mt=bigText(["질문이","수업이 된다."],s,{color:TP.ink,wf:.8,hf:.58,start:.1,dur:.3});
+  const k=eo((s-.55)/.4);if(k>0){g.save();g.font=fD(mt.size);const w=g.measureText("수업이 된다.").width,y=mt.y0+mt.lh+mt.size*.58,gr=g.createLinearGradient(W/2-w/2,0,W/2+w/2,0);gr.addColorStop(0,TP.berry);gr.addColorStop(1,TP.gold);g.fillStyle=gr;g.fillRect(W/2-w/2,y,w*k,Math.max(6,mt.size*.07));g.restore();}
 }
-function fxDeck(b,s,d){ /* 카드 일곱 장이 부채꼴로 펼쳐지고, 가운데 한 장이 뽑혀 뒤집힘 */
-  const g=tr.ctx,{W,H,u}=tr,A=tr.acc;fill(TP.deep);tr.light=false;
-  const cw=Math.min(W,H)*.23,ch=cw*1.5,R=ch*1.5,px=W/2,py=H*.4+R;                      /* 부채의 회전 중심은 화면 아래쪽 */
-  const pick=clamp((s-d*.42)/.5),lift=eback(pick);
-  if(pick>0){const gy=H*.4-lift*ch*.4,gr=g.createRadialGradient(px,gy,0,px,gy,ch*1.5);gr.addColorStop(0,`rgba(246,201,126,${(.55*clamp(pick*2)).toFixed(3)})`);gr.addColorStop(1,"rgba(246,201,126,0)");g.fillStyle=gr;g.fillRect(px-ch*1.5,gy-ch*1.5,ch*3,ch*3);
-    g.save();g.translate(px,gy);g.rotate(s*.8);for(let i=0;i<12;i++){g.fillStyle=TP.candle;g.globalAlpha=.1*clamp(pick*2);g.beginPath();g.moveTo(0,0);g.arc(0,0,ch*1.6,i/12*Math.PI*2,(i+.5)/12*Math.PI*2);g.closePath();g.fill();}g.restore();}
-  const card=face=>{g.shadowColor="rgba(0,0,0,.45)";g.shadowBlur=18*u;g.shadowOffsetY=8*u;rr(g,-cw/2,-ch/2,cw,ch,cw*.09);g.fillStyle=face?TP.cream:TP.pine;g.fill();g.shadowColor="transparent";
-    g.lineWidth=3*u;g.strokeStyle=TP.gold;g.stroke();rr(g,-cw/2+cw*.08,-ch/2+cw*.08,cw*.84,ch-cw*.16,cw*.05);g.lineWidth=1.2*u;g.strokeStyle=face?TP.gold:TP.goldL;g.stroke();
-    g.fillStyle=face?TP.berry:TP.goldL;g.beginPath();for(let k=0;k<8;k++){const a=-Math.PI/2+k*Math.PI/4,r=k%2?cw*.07:cw*.25;k?g.lineTo(r*Math.cos(a),r*Math.sin(a)):g.moveTo(r*Math.cos(a),r*Math.sin(a));}g.closePath();g.fill();};
-  const put=(a,rad,sc,flip)=>{g.save();g.translate(px+rad*Math.sin(a),py-rad*Math.cos(a));g.rotate(a);g.scale(sc*Math.max(.04,Math.abs(Math.cos(flip*Math.PI))),sc);card(flip>.5);g.restore();};
-  for(let i=0;i<7;i++){if(i===3)continue;const p=eback(clamp((s-.04-Math.abs(i-3)*.05)/.4));put((i-3)*.19*p,R*p,1,0);}
-  put(0,R*eback(clamp((s-.04)/.4))+lift*ch*.4,1+.2*lift,pick);
-  bigText(b.l,s,{start:.18,color:TP.cream,y:H*.8,hf:.26,wf:.8,shadow:A.bg===TP.navy?TP.berry:A.bg});
-  snowDots(s,true);
+function reelLock(g,s,d){
+  const {W,H,u}=reel,m=Math.min(W,H);reelSpace(g,s+20);
+  g.save();g.lineWidth=1.6*u;for(let k=0;k<10;k++){const rx=m*(.3+.07*k)*(W>H?1.3:1)*eo(clamp((s-k*.03)/.8));g.strokeStyle=[TP.candle,TP.gold,TP.mint,TP.pink,TP.cream][k%5];g.globalAlpha=.17;g.setLineDash([(8+k*2)*u,(6+k)*u]);g.lineDashOffset=(k%2?1:-1)*s*30*u;g.beginPath();g.ellipse(W/2,H*.46,rx,rx*.4,0,0,6.283);g.stroke();}g.setLineDash([]);g.restore();
+  reelMark(g,W/2,H*.24,m*.12*eback(clamp(s/.45)),1,s);
+  const mt=bigText(["AI-E랩 연구 여정"],s,{start:.12,color:TP.cream,hf:.2,wf:.82,y:H*.5,shadow:TP.berry});
+  g.save();g.globalAlpha=sm(.5,.9,s);g.textAlign="center";g.textBaseline="middle";let fs=Math.max(22,64*u);g.font=fS(fs);const sw=g.measureText("나의 결, 우리의 겹").width;if(sw>W*.84){fs*=W*.84/sw;g.font=fS(fs);}
+  g.fillStyle=TP.candle;g.fillText("나의 결, 우리의 겹",W/2,H*.5+mt.size*.62+fs*.75);
+  g.font=fM(Math.max(11,15*u));g.fillStyle="rgba(243,238,223,.72)";g.fillText("2026 AI교육 성과주간 · AI융합교육대학원 · 곁",W/2,H*.87);
+  g.translate(W*.72,H*.5-mt.size*.82);g.rotate(-.06);g.font=fH(Math.max(20,40*u));g.fillStyle=TP.pink;g.fillText("open to new questions",0,0);g.restore();
+  if(s<.3){g.fillStyle=`rgba(255,248,230,${((1-s/.3)*.85).toFixed(3)})`;g.fillRect(0,0,W,H);}
+  const fl=ei((s-(d-.4))/.4);if(fl>0){g.fillStyle=`rgba(4,16,11,${fl.toFixed(3)})`;g.fillRect(0,0,W,H);}
 }
-function fxTitle(b,s,d){ /* 색 막대가 가운데로 모이고 제목이 꽂힘. 끝은 어둠으로 닫혀 첫 컷과 이어짐 */
-  const g=tr.ctx,{W,H,u}=tr,A=tr.acc;fill(TP.deep);tr.light=false;
-  const cols=[TP.berry,TP.gold,TP.holly,TP.pink,TP.mint],n=cols.length;
-  if(s<.7){cols.forEach((c,i)=>{const p=eo(clamp((s-i*.04)/.25)),conv=eio(clamp((s-.34)/.3)),w=W/n,x=i*w+(W/2-i*w-w/2)*conv;g.fillStyle=c;g.fillRect(x,0,w*(1-conv)+4,H*p);});}
-  if(s>.5){const e=eback(clamp((s-.5)/.4));
-    g.save();g.translate(W/2,H*.42);g.rotate(s*.35);for(let i=0;i<16;i++){g.fillStyle=i%2?A.bg:TP.candle;g.globalAlpha=.13*e;g.beginPath();g.moveTo(0,0);g.arc(0,0,Math.max(W,H),i/16*Math.PI*2,(i+.5)/16*Math.PI*2);g.closePath();g.fill();}g.restore();
-    for(let i=0;i<8;i++){const a=i/8*Math.PI*2+s*.9,x=W/2+Math.cos(a)*Math.min(W,H)*.47*(W>H?1.4:1),y=H*.44+Math.sin(a)*Math.min(W,H)*.36;g.save();g.globalAlpha=e;drawOrnamentSmall(g,i,x,y);g.restore();}
-    const m=bigText(b.l,s,{start:.5,color:TP.cream,hf:.3,wf:.86,y:H*.4,shadow:TP.berry});
-    const uy=m.y0+m.size*.66;g.fillStyle=TP.gold;g.fillRect(W/2-100*u*e,uy,200*u*e,7*u);
-    g.save();g.globalAlpha=clamp((s-.85)/.3);g.textAlign="center";g.textBaseline="middle";
-    let fs=Math.max(24,74*u);g.font="700 "+fD(fs,"Gowun Batang");const sw=g.measureText(b.sub).width;if(sw>W*.86){fs*=W*.86/sw;g.font="700 "+fD(fs,"Gowun Batang");}
-    g.fillStyle=TP.candle;g.fillText(b.sub,W/2,uy+7*u+fs*.9);
-    g.font=fM(Math.max(11,15*u));g.fillStyle="rgba(243,238,223,.72)";g.fillText("2026 AI교육 성과주간 · AI융합교육대학원 · 곁",W/2,H*.82);
-    g.translate(W*.72,m.y0-m.size*.82);g.rotate(-.06);g.font=fH(Math.max(20,42*u));g.fillStyle=TP.pink;g.fillText("open to new questions",0,0);
-    g.restore();}
-  const fl=ei((s-(d-.35))/.35);if(fl>0){g.fillStyle=`rgba(12,43,31,${fl})`;g.fillRect(0,0,W,H);}
-  snowDots(s,true);
+function drawReel(t){
+  const g=reel.ctx,{W,H,u}=reel,m=Math.min(W,H),cx=W/2,cy=H*.46;
+  tr.ctx=g;tr.W=W;tr.H=H;tr.u=u;tr.card=REEL_CARD;tr.has=REEL_HAS;tr.acc=ACC.green;   /* 큰 글씨 도구(bigText 등)를 함께 쓰기 위해 트레일러 엔진을 이 캔버스에 물림 */
+  if(!reel.sheet)reelSheets();
+  let light=false;
+  if(t<13.8){
+    reelSpace(g,t);
+    if(t<7.6)reelCloud(g,t,cx,cy,m);
+    if(t>=6.5&&t<9.7)reelCore(g,t,cx,cy,m);
+    if(t>=9.4)reelMap(g,t,cx,m);
+    const fl=t<7.45?sm(7.3,7.45,t)*.9:Math.max(0,.9-(t-7.45)/.45);if(fl>0){g.fillStyle=`rgba(255,248,230,${fl.toFixed(3)})`;g.fillRect(0,0,W,H);}   /* 한 점으로 모이는 순간의 섬광 */
+    const wp=sm(13.5,13.8,t);if(wp>0)[TP.candle,TP.pink,TP.paper].forEach((c,i)=>{const w=clamp(wp*1.5-i*.22)*W*1.35;g.fillStyle=c;g.beginPath();g.moveTo(0,0);g.lineTo(w,0);g.lineTo(w-W*.3,H);g.lineTo(0,H);g.closePath();g.fill();});
+  }else if(t<15.3){light=true;reelSay(g,t-13.8);}
+  else reelLock(g,t-15.3,reel.T-15.3);
+  tr.light=light;$("reel").classList.toggle("dark",!light);reelUI(t,light);
+}
+function reelUI(t,light){
+  const g=reel.ctx,{W,H,u}=reel,pad=Math.max(22*u,18),col=light?"rgba(30,42,35,.62)":"rgba(243,238,223,.6)",dim=light?"rgba(30,42,35,.18)":"rgba(243,238,223,.2)";
+  const top=pad+(parseFloat(getComputedStyle(document.documentElement).paddingTop)||0),bot=H-pad-(parseFloat(getComputedStyle(document.documentElement).paddingBottom)||0);
+  g.save();g.font=fM(Math.max(10,11*u));g.fillStyle=col;g.textBaseline="top";g.textAlign="right";g.fillText("AI-E랩 · OPENING",W-pad,top);
+  const ff=String(Math.floor((t%1)*30)).padStart(2,"0"),sec=String(Math.floor(t)).padStart(2,"0");
+  g.textAlign="left";g.textBaseline="bottom";g.fillText(`00:00:${sec}:${ff}`,pad,bot);
+  const bw=Math.min(W*.3,280*u),x0=W-pad-bw;g.fillStyle=dim;g.fillRect(x0,bot-4,bw,2);g.fillStyle=col;g.fillRect(x0,bot-4,bw*clamp(t/reel.T),2);[6.5,9.5,13.8].forEach(c=>g.fillRect(x0+bw*c/reel.T-1,bot-8,2,10));
+  g.restore();
 }
 /* ============================================================
    연구회 트레일러 (15초 · 8비트): 비트마다 화면을 꽉 채우는 큰 글씨 한 덩어리, 직선 컷.
@@ -1466,7 +1535,7 @@ function drawOrnamentSmall(g,i,x,y){const u=tr.u*.5,c=[TP.berry,TP.gold,TP.holly
   else if(i%3===1){g.fillStyle=c;rr(g,-20*u,-20*u,40*u,40*u,7*u);g.fill();g.fillStyle=TP.cream;g.fillRect(-4*u,-20*u,8*u,40*u);g.fillRect(-20*u,-4*u,40*u,8*u);}
   else{g.fillStyle=c;g.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,r=k%2?9*u:22*u;k?g.lineTo(r*Math.cos(a),r*Math.sin(a)):g.moveTo(r*Math.cos(a),r*Math.sin(a));}g.closePath();g.fill();}
   g.restore();}
-const FX={hook:fxHook,solid:fxSolid,words:fxWords,letters:fxLetters,marquee:fxMarquee,glitch:fxGlitch,typo:fxTypo,count:fxCount,bars:fxBars,swap:fxSwap,ring:fxRing,end:fxEnd,stack:fxStack,deck:fxDeck,title:fxTitle};
+const FX={hook:fxHook,solid:fxSolid,words:fxWords,letters:fxLetters,marquee:fxMarquee,glitch:fxGlitch,typo:fxTypo,count:fxCount,bars:fxBars,swap:fxSwap,ring:fxRing,end:fxEnd};
 /* 비트 안의 컷 시각(초): 효과별로 내부 컷이 있는 비트는 그 컷마다 임팩트를 넣음 */
 function cutTimes(beat,d){
   if(beat.fx==="words")return beat.w.map((_,i)=>i*d/beat.w.length);
@@ -1475,9 +1544,6 @@ function cutTimes(beat,d){
   if(beat.fx==="swap")return [0,d*.5];
   if(beat.fx==="glitch")return [0,d*.6];
   if(beat.fx==="letters")return [0,...[...beat.l[0]].map((_,i)=>.1+i*.18)];
-  if(beat.fx==="stack")return [0,d*.45];
-  if(beat.fx==="deck")return [0,d*.42];
-  if(beat.fx==="title")return [0,.5];
   return [0];
 }
 function impact(s,cuts,strength=1){ /* 가장 최근 컷으로부터의 경과 시간 */
