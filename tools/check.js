@@ -13,6 +13,7 @@ const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const MIME = { '.html': 'text/html; charset=utf-8', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.json': 'application/json', '.webm': 'video/webm', '.mp4': 'video/mp4' };
+const VREQ = {};   /* 영상 파일별로 처음부터 받기 시작한 횟수 */
 const fails = [];
 const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'}  ${label}${detail ? '  ' + detail : ''}`); if (!cond) fails.push(label); };
 
@@ -21,6 +22,7 @@ const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'
     const u = decodeURIComponent(q.url.split('?')[0]), f = path.join(ROOT, u === '/' ? 'index.html' : u);
     if (!f.startsWith(ROOT) || !fs.existsSync(f) || !fs.statSync(f).isFile()) { r.writeHead(404); return r.end(); }
     const size = fs.statSync(f).size, type = MIME[path.extname(f)] || 'application/octet-stream', m = /bytes=(\d+)-(\d*)/.exec(q.headers.range || '');   /* 영상은 구간 요청으로 읽음 */
+    if (/\.(webm|mp4)$/.test(f) && (!m || +m[1] === 0)) { const k = path.basename(f).split('.')[0]; VREQ[k] = (VREQ[k] || 0) + 1; }
     if (m) { const a = +m[1], b = m[2] ? +m[2] : size - 1; r.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${a}-${b}/${size}`, 'Accept-Ranges': 'bytes', 'Content-Length': b - a + 1 }); return fs.createReadStream(f, { start: a, end: b }).pipe(r); }
     r.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size }); fs.createReadStream(f).pipe(r);
   });
@@ -141,9 +143,12 @@ const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'
 
   /* 8-2) 오프닝의 바탕 영상: 있으면 재생되고, 못 받아도 코드로 그린 바탕으로 시작되는지 */
   { const ctx = await browser.newContext({ viewport: { width: 1100, height: 820 } }), p = await ctx.newPage(), errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.goto(base); await p.waitForTimeout(4200);
+    const before = { ...VREQ }; await p.goto(base); await p.waitForTimeout(4200);
     const a = await p.evaluate(() => { const v = document.getElementById('reelv'); return { on: reel.on, vid: reel.vid, playing: !v.paused && v.currentTime > .3 }; });
-    ok(a.on && a.vid && a.playing && !errs.length, '오프닝: 바탕 영상이 재생됨', JSON.stringify(a)); await ctx.close(); }
+    ok(a.on && a.vid && a.playing && !errs.length, '오프닝: 바탕 영상이 재생됨', JSON.stringify(a));
+    await p.evaluate(() => stopReel()); await p.waitForTimeout(3500);
+    const once = ['opening', 'enter'].map(k => (VREQ[k] || 0) - (before[k] || 0));
+    ok(once[0] === 1 && once[1] === 1, '영상을 각각 한 번씩만 받음', `opening ${once[0]}회, enter ${once[1]}회`); await ctx.close(); }
   { const ctx = await browser.newContext({ viewport: { width: 1100, height: 820 } }), p = await ctx.newPage(), errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.route('**/opening.*', r => r.fulfill({ status: 404, body: '' })); await p.goto(base); await p.waitForTimeout(4200);
     const a = await p.evaluate(() => ({ on: reel.on, vid: reel.vid, started: reel.t0 > 0 }));

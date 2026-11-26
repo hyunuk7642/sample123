@@ -832,7 +832,9 @@ function enterApp(){
    영상(assets/enter.*)은 금빛이 아트리움 안쪽으로 날아가고 카메라가 따라가다 빛 속으로 들어가는 장면입니다.
    EV.w·h는 영상의 첫 장면이 배경 그림(EV.img)에서 차지하는 영역(가운데 기준)입니다. */
 const EV={w:1316,h:740,img:[1536,1024],zoom:620,reveal:1400,end:[.69,.33]};   /* end: 영상 마지막 장면에서 빛이 있는 자리(가로·세로 비율) */
-function prepEnter(){const v=$("enterv");if(REDUCE||v.dataset.prep)return;v.dataset.prep="1";try{v.preload="auto";v.load();}catch(e){}}   /* 시작 화면이 보이면 미리 받아 둠 */
+/* preload="none"으로 둔 영상을 이제 받기 시작합니다. 속성만 바꿔도 받는 브라우저가 대부분이라, 잠시 뒤에도 조용할 때만 load()를 부릅니다(둘을 함께 부르면 같은 파일을 두 번 받음). */
+function wakeVideo(v){try{v.preload="auto";setTimeout(()=>{if(v.readyState===0&&v.networkState!==2){try{v.load();}catch(e){}}},250);}catch(e){}}
+function prepEnter(){const v=$("enterv");if(REDUCE||v.dataset.prep)return;v.dataset.prep="1";wakeVideo(v);}   /* 시작 화면이 보이면 미리 받아 둠 */
 function enterVideo(show){
   entering=true;
   const ev=$("enterv"),veil=$("veil"),flash=$("flash"),intro=$("intro"),app=$("app"),W=innerWidth,H=innerHeight,diag=Math.hypot(W,H),cl=x=>Math.max(0,Math.min(1,x));
@@ -1159,7 +1161,7 @@ function startReel(loop){
   sizeReel();addEventListener("resize",sizeReel);reelAssets();
   const go=()=>{if(!reel.on)return;reel.t0=performance.now();reelPlay();cancelAnimationFrame(reel.raf);reel.raf=requestAnimationFrame(reelFrame);};
   /* 바탕 영상이 재생 가능해질 때까지 최대 2.5초 기다림. 그 안에 준비되지 않으면 코드로 그린 바탕으로 시작 */
-  const v=$("reelv"),vready=new Promise(r=>{if(v.readyState>=3)return r();v.addEventListener("canplay",r,{once:true});v.addEventListener("error",r,{once:true});setTimeout(r,2500);try{v.preload="auto";v.load();}catch(e){r();}});
+  const v=$("reelv"),vready=new Promise(r=>{if(v.readyState>=3)return r();v.addEventListener("canplay",r,{once:true});v.addEventListener("error",r,{once:true});setTimeout(r,2500);wakeVideo(v);});
   const fready=document.fonts&&document.fonts.load?Promise.race([Promise.all([document.fonts.load('80px "Black Han Sans"',"연구A"),document.fonts.load('40px "Nanum Pen Script"',"연구A"),document.fonts.load('700 40px "Gowun Batang"',"연구A"),document.fonts.load('500 20px "IBM Plex Sans KR"',"연구A")]),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}):Promise.resolve();   /* 글꼴을 못 받아도 멈추지 않고 대체 글꼴로 시작 */
   Promise.all([fready,vready]).then(go,go);
 }
@@ -1379,10 +1381,10 @@ const BEAT_NAME=["훅","연구 질문","설계","교실","시행착오","학생�
 const SCRIPTS={
 "XAI 수업 연구회":{c:"lime",b:[{fx:"hook",l:["AI 면접관"],stamps:["합격","불합격"]},{fx:"solid",l:["믿어도","될까?"]},{fx:"letters",l:["X-BIAS"],sub:"내 판단 먼저"},{fx:"marquee",m:"왜?",w:["정확성","맥락성","공정성","책임성"]},{fx:"glitch",a:["빠듯했다"],b:["질문 틀로"]},{fx:"typo",p:[["잘 확인하고"],["쓰면"],["믿을 만해요"]]},{fx:"count",label:"AI 리터러시",from:3.40,to:4.07,dec:2},{fx:"end",l:["XAI 수업 연구회"],sub:"초6 도덕"}]},
 "AI 에듀-크리에이터":{c:"orange",b:[{fx:"hook",l:["같은 속도?"],race:true},{fx:"solid",l:["배움 격차,","AI로 해소할 수 있을까?"]},{fx:"letters",l:["온 맞춤"],sub:"穩 · On · 8차시 개별화 수업 프로그램"},{fx:"words",w:["진단","맞춤","확산"],steps:true},{fx:"words",w:["가상 교구","챗봇","AR"]},{fx:"solid",l:["교사의","1:1 밀착 피드백"]},{fx:"solid",l:["느린 학습자도","놓치지 않게"]},{fx:"end",l:["AI 에듀-크리에이터"],sub:"초등 1~6학년 · 수학·영어·보건"}]},
-"AlgoRhythm 연구회":{c:"lime",b:[{fx:"hook",l:["컴퓨터는"],drop:true},{fx:"solid",l:["뭘 보고","판단할까?"]},{fx:"letters",l:["KNN"],sub:"가까운 이웃으로 판단하기 · 놀이에서 공유까지 6차시"},{fx:"ring",l:["이웃 몇 개?"],counts:[3,5]},{fx:"glitch",a:["용어 = 멘붕"],b:["활동 먼저"]},{fx:"typo",p:[["다 아는 줄","알았는데"],["우리가 넣어 준","자료를"],["보고 정하는","거였어요"]]},{fx:"swap",a:["닮아서"],b:["세어 보니"]},{fx:"end",l:["AlgoRhythm"],sub:"초4·초6",wave:true}]},
+"AlgoRhythm 연구회":{c:"lime",b:[{fx:"hook",l:["컴퓨터는"]},{fx:"solid",l:["뭘 보고","판단할까?"]},{fx:"letters",l:["KNN"],sub:"가까운 이웃으로 판단하기 · 놀이에서 공유까지 6차시"},{fx:"ring",l:["이웃 몇 개?"],counts:[3,5]},{fx:"glitch",a:["용어 = 멘붕"],b:["활동 먼저"]},{fx:"typo",p:[["다 아는 줄","알았는데"],["우리가 넣어 준","자료를"],["보고 정하는","거였어요"]]},{fx:"swap",a:["닮아서"],b:["세어 보니"]},{fx:"end",l:["AlgoRhythm"],sub:"초4·초6",wave:true}]},
 "A.S.K. (AI for All School and Kids)":{c:"coral",b:[{fx:"hook",l:["단톡방,","싸늘"],bubbles:true},{fx:"solid",l:["어떻게","말할까?"]},{fx:"words",w:["갈등","스티커","챗봇","가이드"]},{fx:"solid",l:["AI 감정","스티커"],stickers:true},{fx:"swap",a:["제각각"],b:["문장틀로","함께"]},{fx:"typo",p:[["친구의 마음도"],["더 잘 이해하고"],["싶어요"]]},{fx:"swap",a:["그대로?"],b:["고쳐 쓴다"]},{fx:"end",l:["A.S.K."],sub:"초등 5~6학년 · 일반·특수학급 함께"}]},
 "모두를 위한 AI 윤리 교육 연구회":{c:"orange",b:[{fx:"hook",l:["AI 윤리"]},{fx:"solid",l:["모두에게","닿았나?"]},{fx:"letters",l:["UDL"],sub:"보편적 학습 설계"},{fx:"words",w:["참여","표상","행동과 표현"],venn:true},{fx:"solid",l:["일반 + 특수교사","둘이 함께 가르친다"]},{fx:"solid",l:["배움의 장벽을","먼저 분석한다"]},{fx:"typo",cap:"수업 설계",p:[["AI의","공정성과 책임을"],["자기 방식으로","표현한다"]]},{fx:"end",l:["모두를 위한","AI 윤리 교육 연구회"],sub:"초6 국어·도덕 · 6차시"}]},
-"우직":{c:"violet",b:[{fx:"hook",l:["어디로","갈래?"],flight:true},{fx:"solid",l:["AI는 추천","고르는 건 나"],split:true},{fx:"words",w:["일정","예산","지도","메모"]},{fx:"solid",l:["웹앱으로","여행 동선을 짠다"],pin:true},{fx:"glitch",a:["지도 연동"],b:["끊김!"]},{fx:"typo",p:[["가우디가"],["자연을 건축으로"],["직접 보고 싶어요"]]},{fx:"swap",a:["졸던 학생이"],b:["발표까지"]},{fx:"end",l:["우직"],sub:"고1~3 여행지리"}]},
+"우직":{c:"violet",b:[{fx:"hook",l:["어디로","갈래?"]},{fx:"solid",l:["AI는 추천","고르는 건 나"],split:true},{fx:"words",w:["일정","예산","지도","메모"]},{fx:"solid",l:["웹앱으로","여행 동선을 짠다"],pin:true},{fx:"glitch",a:["지도 연동"],b:["끊김!"]},{fx:"typo",p:[["가우디가"],["자연을 건축으로"],["직접 보고 싶어요"]]},{fx:"swap",a:["졸던 학생이"],b:["발표까지"]},{fx:"end",l:["우직"],sub:"고1~3 여행지리"}]},
 "AI-Simulation Science Lab":{c:"cyan",b:[{fx:"hook",l:["속도를","바꾸면?"],orbit:true},{fx:"solid",l:["궤도가","달라질까?"]},{fx:"letters",l:["PYTHON"],sub:"코드로 실행하는 3D 시뮬레이션"},{fx:"solid",l:["지진파가","닿지 않는 곳은?"]},{fx:"words",w:["예상","값 바꾸기","확인"]},{fx:"solid",l:["AI에게 묻고","결과와 대조"]},{fx:"words",w:["물리","지구과학","정보"]},{fx:"end",l:["AI-Simulation","Science Lab"],sub:"고1~2 · 과학·정보 융합"}]},
 "AI 빌드업":{c:"lime",b:[{fx:"hook",l:["연구소","비상!"],alarm:true},{fx:"solid",l:["데이터 분석으로","문제를 해결할 수 있을까?"]},{fx:"bars",n:5,l:["방탈출","미션 5개"]},{fx:"solid",l:["데이터 탐정,","이상 설비를 찾다"]},{fx:"swap",a:["너무 쉬웠다"],b:["온도 × 전력"]},{fx:"typo",p:[["지루한데"],["방탈출로 푸니까"],["재밌었어요"]],strike:0},{fx:"solid",l:["수동적이던 학생도","자기 역할로 참여한다"]},{fx:"end",l:["AI 빌드업"],sub:"중1 정보 · AIDU 데이터 탐구"}]},
 "SM-ART 융합 랩":{c:"coral",b:[{fx:"hook",l:["오늘","무슨 색?"],flash:true},{fx:"solid",l:["감정,","말로는 어려워"],shake:true},{fx:"words",w:["색 고르기","AI 질문","성찰문"]},{fx:"solid",l:["왜","이 색?"]},{fx:"swap",a:["조회용","감정 확인 앱"],b:["교과 수업과","수행평가로"]},{fx:"solid",l:["AI 답변도","다시 본다"]},{fx:"swap",a:["선택에서"],b:["설명으로"]},{fx:"end",l:["SM-ART 융합 랩"],sub:"고1 진로와 직업"}]},
@@ -1498,13 +1500,11 @@ function fxSolid(b,s,d){ /* 전면 색 + 초대형 글자 + 밑줄 스와이프 
     g.save();g.globalAlpha=.22;g.translate(x,y);g.scale(e,e);g.rotate(s*2);g.fillStyle=A.fg;if(i===1){g.beginPath();for(let k=0;k<10;k++){const an=-Math.PI/2+k*Math.PI/5,r=k%2?40*u:95*u;k?g.lineTo(r*Math.cos(an),r*Math.sin(an)):g.moveTo(r*Math.cos(an),r*Math.sin(an));}g.closePath();g.fill();}else{g.beginPath();g.arc(0,0,(70+i*30)*u,0,Math.PI*2);g.fill();}g.restore();}
   vignette(true);
   if(b.split){const k=eo(s/.5);g.fillStyle="rgba(0,0,0,.18)";g.fillRect(W/2,0,W/2*k,H);}
-  if(b.pre&&s<.45){g.save();g.font=fD(Math.min(W,H)*.5,"Gowun Batang");g.fillStyle=A.fg;g.textAlign="center";g.textBaseline="middle";g.globalAlpha=1-clamp((s-.3)/.15);g.fillText(b.pre,W/2,H/2);g.restore();}
   if(b.stickers){for(let i=0;i<10;i++){const p=clamp((s-.3-i*.07)/.4),e=eback(p);if(p<=0)continue;const x=W*(.1+rnd1(i)*.8),y=H*(.12+rnd1(i+40)*.76);g.save();g.translate(x,y);g.scale(e,e);g.rotate((rnd1(i+80)-.5)*.8);g.fillStyle=[TP.candle,TP.cream,TP.mint,TP.gold][i%4];g.beginPath();g.arc(0,0,22*u,0,Math.PI*2);g.fill();g.fillStyle=TP.ink;g.beginPath();g.arc(-7*u,-4*u,2.5*u,0,Math.PI*2);g.arc(7*u,-4*u,2.5*u,0,Math.PI*2);g.fill();g.beginPath();g.arc(0,2*u,9*u,.2,Math.PI-.2);g.lineWidth=2*u;g.strokeStyle=TP.ink;g.stroke();g.restore();}}
   if(b.pin){const p=eback(clamp((s-.2)/.4));g.save();g.translate(W/2,H*.25);g.scale(p,p);g.fillStyle=TP.berry;g.beginPath();g.arc(0,-18*u,16*u,0,Math.PI*2);g.fill();g.beginPath();g.moveTo(-14*u,-10*u);g.lineTo(14*u,-10*u);g.lineTo(0,18*u);g.closePath();g.fill();g.restore();}
   if(b.lines2){g.lineWidth=4*u;[[TP.candle,1],[TP.cream,-1]].forEach(([c,sg],k)=>{g.strokeStyle=c;g.globalAlpha=.55;g.beginPath();const n=Math.floor(eo(s/1.2)*60);for(let i=0;i<=n;i++){const x=W*.08+i/60*W*.84,y=H*.5+sg*(i<30?-(i/30)*H*.2:-(H*.2)+((i-30)/30)*H*.3*(k?.2:1));i?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();});g.globalAlpha=1;}
-  const b0=b.pre?.45:0;
-  const m=bigText(b.l,s,{start:b0,color:A.fg,shake:b.shake,scale:b.l.length===1&&b.l[0].length<=5?1:.96});
-  underline(b.l,m.size,m.y0,m.lh,s,A.line,b0+.45);
+  const m=bigText(b.l,s,{start:0,color:A.fg,shake:b.shake,scale:b.l.length===1&&b.l[0].length<=5?1:.96});
+  underline(b.l,m.size,m.y0,m.lh,s,A.line,.45);
   snowDots(s,!tr.light);
 }
 function fxWords(b,s,d){ /* 단어가 한 컷씩 화면 전체로, 뒤에서 도형이 원→사각→삼각 */
