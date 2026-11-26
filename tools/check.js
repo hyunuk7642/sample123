@@ -12,7 +12,7 @@
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
-const MIME = { '.html': 'text/html; charset=utf-8', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.json': 'application/json' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.woff2': 'font/woff2', '.webp': 'image/webp', '.png': 'image/png', '.json': 'application/json', '.webm': 'video/webm', '.mp4': 'video/mp4' };
 const fails = [];
 const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'}  ${label}${detail ? '  ' + detail : ''}`); if (!cond) fails.push(label); };
 
@@ -20,7 +20,9 @@ const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'
   const srv = http.createServer((q, r) => {
     const u = decodeURIComponent(q.url.split('?')[0]), f = path.join(ROOT, u === '/' ? 'index.html' : u);
     if (!f.startsWith(ROOT) || !fs.existsSync(f) || !fs.statSync(f).isFile()) { r.writeHead(404); return r.end(); }
-    r.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r);
+    const size = fs.statSync(f).size, type = MIME[path.extname(f)] || 'application/octet-stream', m = /bytes=(\d+)-(\d*)/.exec(q.headers.range || '');   /* 영상은 구간 요청으로 읽음 */
+    if (m) { const a = +m[1], b = m[2] ? +m[2] : size - 1; r.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${a}-${b}/${size}`, 'Accept-Ranges': 'bytes', 'Content-Length': b - a + 1 }); return fs.createReadStream(f, { start: a, end: b }).pipe(r); }
+    r.writeHead(200, { 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Content-Length': size }); fs.createReadStream(f).pipe(r);
   });
   await new Promise(r => srv.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${srv.address().port}/`;
@@ -129,10 +131,21 @@ const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'
 
   /* 8) 글꼴 하나를 못 받아도 쇼릴과 트레일러가 멈추지 않는지 */
   { const ctx = await browser.newContext({ viewport: { width: 1100, height: 820 } }), p = await ctx.newPage();
-    await p.route('**/black-han-sans-400.woff2', r => r.fulfill({ status: 404, body: '' })); await p.goto(base); await p.waitForTimeout(2500);
+    await p.route('**/black-han-sans-400.woff2', r => r.fulfill({ status: 404, body: '' })); await p.goto(base); await p.waitForTimeout(3600);
     const reelRuns = await p.evaluate(() => reel.on && reel.t0 > 0); await p.evaluate(() => { stopReel(); S.card = CARDS[1]; });
     await p.waitForTimeout(600); await p.evaluate(() => startTrailer(S.card)); await p.waitForTimeout(1500);
     ok(reelRuns && await p.evaluate(() => tr.on && tr.t0 > 0), '글꼴 하나가 실패해도 쇼릴·트레일러가 시작됨'); await ctx.close(); }
+
+  /* 8-2) 오프닝의 바탕 영상: 있으면 재생되고, 못 받아도 코드로 그린 바탕으로 시작되는지 */
+  { const ctx = await browser.newContext({ viewport: { width: 1100, height: 820 } }), p = await ctx.newPage(), errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.goto(base); await p.waitForTimeout(4200);
+    const a = await p.evaluate(() => { const v = document.getElementById('reelv'); return { on: reel.on, vid: reel.vid, playing: !v.paused && v.currentTime > .3 }; });
+    ok(a.on && a.vid && a.playing && !errs.length, '오프닝: 바탕 영상이 재생됨', JSON.stringify(a)); await ctx.close(); }
+  { const ctx = await browser.newContext({ viewport: { width: 1100, height: 820 } }), p = await ctx.newPage(), errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.route('**/opening.*', r => r.fulfill({ status: 404, body: '' })); await p.goto(base); await p.waitForTimeout(4200);
+    const a = await p.evaluate(() => ({ on: reel.on, vid: reel.vid, started: reel.t0 > 0 }));
+    for (const t of [1, 4, 7, 9, 12, 14.5, 16, 18.5]) await p.evaluate(tt => { cancelAnimationFrame(reel.raf); drawReel(tt); }, t);
+    ok(a.on && !a.vid && a.started && !errs.length, '오프닝: 영상을 못 받아도 코드로 그린 바탕으로 시작됨', JSON.stringify(a) + ' ' + (errs[0] || '')); await ctx.close(); }
 
   /* 9) 원하는 연구회 보기: 목록에 20곳이 있고, 고르면 그 연구회의 트레일러와 입학 화면이 뜨는지 */
   { const { p, log } = await open({ viewport: { width: 1100, height: 820 } }); await toJourney(p);
