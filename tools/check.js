@@ -7,7 +7,8 @@
    로컬 서버로 페이지를 열고 외부 네트워크를 전부 막은 채 아래를 확인합니다. 하나라도 어긋나면 실패(종료 코드 1)로 끝납니다.
    1) 외부 요청 0건, 글꼴·배경·카드 그림 로드   2) 카드 20장 × 보이는 모든 단계 × 주제 6개 (화면 3종)
    3) 실제 클릭 경로 한 바퀴                    4) 트레일러 20개   5) 다크 모드 · 움직임 줄이기 · 무입력 복귀
-   6) 터치 탭이 덮개 아래로 새지 않음            7) 추천에 20곳이 고르게 나옴   8) 글꼴 하나가 실패해도 영상이 시작됨 */
+   6) 터치 탭이 덮개 아래로 새지 않음            7) 추천에 20곳이 고르게 나옴   8) 글꼴 하나가 실패해도 영상이 시작됨
+   9) '원하는 연구회 보기'에서 고른 연구회의 트레일러와 내용이 뜸 */
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..');
@@ -132,6 +133,14 @@ const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'
     const reelRuns = await p.evaluate(() => reel.on && reel.t0 > 0); await p.evaluate(() => { stopReel(); S.card = CARDS[1]; });
     await p.waitForTimeout(600); await p.evaluate(() => startTrailer(S.card)); await p.waitForTimeout(1500);
     ok(reelRuns && await p.evaluate(() => tr.on && tr.t0 > 0), '글꼴 하나가 실패해도 쇼릴·트레일러가 시작됨'); await ctx.close(); }
+
+  /* 9) 원하는 연구회 보기: 목록에 20곳이 있고, 고르면 그 연구회의 트레일러와 입학 화면이 뜨는지 */
+  { const { p, log } = await open({ viewport: { width: 1100, height: 820 } }); await toJourney(p);
+    const closed = await p.evaluate(() => document.getElementById('pickList').hidden); await p.click('#pickBtn'); await p.waitForTimeout(700);
+    const list = await p.evaluate(() => ({ n: document.querySelectorAll('.pick').length, names: [...document.querySelectorAll('.pick b')].every((e, i) => e.textContent === CARDS[i].group), wide: document.documentElement.scrollWidth - document.documentElement.clientWidth }));
+    await p.click('[data-pick="13"]'); await p.waitForTimeout(900);
+    const got = await p.evaluate(() => ({ id: S.card && S.card.id, on: tr.on, script: tr.script === SCRIPTS[CARDS[12].group], title: document.querySelector('#stage h2')?.textContent }));
+    ok(closed && list.n === 20 && list.names && list.wide <= 1 && got.id === 13 && got.on && got.script && got.title === await p.evaluate(() => CARDS[12].group) && !log.errs.length, '원하는 연구회 보기: 고른 연구회의 트레일러와 내용이 뜸', JSON.stringify({ list, got })); await p.context().close(); }
 
   await browser.close(); srv.close();
   console.log(fails.length ? `\n${fails.length}개 실패: ${fails.join(' / ')}` : '\n모두 통과');
