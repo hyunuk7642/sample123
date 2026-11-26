@@ -207,6 +207,8 @@ body.mode-intro #snow{z-index:6}
   background:radial-gradient(circle at var(--fx,50%) var(--fy,50%),#FFFBEF 0,#FFF0C8 18%,#F6C97E 48%,#D9A14E 100%)}
 #wisp{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:8;opacity:0;transition:opacity .4s}
 #wisp.on{opacity:1}
+#enterv{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:8;opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){#enterv{display:none}}
 .intro.flying{transform-origin:0 0;will-change:transform;overflow:hidden}
 .intro.flying .intro-in{pointer-events:none}
 .intro.flying .intro-in,.intro.flying .intro-frame,.intro.flying .intro-corner{opacity:var(--ui,1)}
@@ -489,6 +491,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 <section id="trailer" aria-label="연구회 트레일러. 화면을 누르면 건너뜁니다" hidden><canvas id="trailerc"></canvas><span class="hint">TAP · 건너뛰고 카드 보기</span></section>
 <div id="veil" aria-hidden="true"></div>
 <canvas id="wisp" aria-hidden="true"></canvas>
+<video id="enterv" muted playsinline preload="none" tabindex="-1" aria-hidden="true"><source src="assets/enter.webm" type="video/webm"><source src="assets/enter.mp4" type="video/mp4"></video>
 <div id="flash" aria-hidden="true"></div>
 
 <!-- ============ 본 화면 ============ -->
@@ -744,6 +747,7 @@ function enterApp(){
   if(entering)return;
   const show=()=>{$("intro").hidden=true;$("app").hidden=false;document.body.classList.remove("mode-intro");S.step=0;S.card=null;render();window.scrollTo({top:0});setSnowDensity(40);armIdle();};
   if(REDUCE){show();return;}
+  {const ev=$("enterv");if(ev.readyState>=3&&!ev.error){enterVideo(show);return;}}       /* 전환 영상이 준비됐으면 영상으로, 아니면 아래의 코드 전환으로 */
   entering=true;
   const veil=$("veil"),flash=$("flash"),wc=$("wisp"),wx=wc.getContext("2d"),intro=$("intro"),app=$("app");
   const W=innerWidth,H=innerHeight,dpr=Math.min(devicePixelRatio||1,1.5),diag=Math.hypot(W,H),u0=Math.min(W,H)/900;
@@ -808,6 +812,45 @@ function enterApp(){
       const mask=`radial-gradient(circle at 50% 46%, transparent ${(rho*.5).toFixed(1)}px, #000 ${(rho+1).toFixed(1)}px)`;
       flash.style.webkitMaskImage=mask;flash.style.maskImage=mask;flash.style.opacity=(1-sstep((r-.3)/.7)).toFixed(3);
       if(r>=1){app.style.transform="";app.style.transformOrigin="";flash.style.opacity="0";flash.style.webkitMaskImage=flash.style.maskImage="none";veil.classList.remove("on");entering=false;return;}
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+/* 입장 전환(영상): 시작 화면을 영상 첫 장면과 같은 크기로 살짝 당긴 뒤, 같은 그림에서 출발하는 영상으로 넘깁니다.
+   영상(assets/enter.*)은 금빛이 아트리움 안쪽으로 날아가고 카메라가 따라가다 빛 속으로 들어가는 장면입니다.
+   EV.w·h는 영상의 첫 장면이 배경 그림(EV.img)에서 차지하는 영역(가운데 기준)입니다. */
+const EV={w:1316,h:740,img:[1536,1024],zoom:620,reveal:1400,end:[.69,.33]};   /* end: 영상 마지막 장면에서 빛이 있는 자리(가로·세로 비율) */
+function prepEnter(){const v=$("enterv");if(REDUCE||v.dataset.prep)return;v.dataset.prep="1";try{v.preload="auto";v.load();}catch(e){}}   /* 시작 화면이 보이면 미리 받아 둠 */
+function enterVideo(show){
+  entering=true;
+  const ev=$("enterv"),veil=$("veil"),flash=$("flash"),intro=$("intro"),app=$("app"),W=innerWidth,H=innerHeight,diag=Math.hypot(W,H),cl=x=>Math.max(0,Math.min(1,x));
+  const k=Math.max(W/EV.w,H/EV.h)/Math.max(W/EV.img[0],H/EV.img[1]),len=ev.duration||4;
+  clearTimeout(lightOff);intro.classList.add("flying");veil.classList.add("on");
+  flash.style.transition="none";flash.style.opacity="0";flash.style.webkitMaskImage=flash.style.maskImage="none";{const sv=Math.max(W/1280,H/720);flash.style.setProperty("--fx",(W/2+(EV.end[0]-.5)*1280*sv).toFixed(0)+"px");flash.style.setProperty("--fy",(H/2+(EV.end[1]-.5)*720*sv).toFixed(0)+"px");}   /* 화면을 덮는 빛이 영상 속 빛에서 번져 나오게 */
+  try{ev.pause();ev.currentTime=0;}catch(e){}ev.style.opacity="0";
+  const t0=performance.now();let started=false,swapAt=0;
+  function frame(now){
+    const ms=Math.max(0,now-t0);
+    if(!swapAt){
+      const sc=1+(k-1)*sstep(ms/EV.zoom);
+      intro.style.transform=`translate3d(${(W/2*(1-sc)).toFixed(2)}px,${(H/2*(1-sc)).toFixed(2)}px,0) scale(${sc.toFixed(4)})`;
+      intro.style.setProperty("--ui",(1-sstep(ms/(EV.zoom*.75))).toFixed(3));          /* 글자와 카드가 물러나고 아트리움만 남음 */
+      if(!started&&ms>=EV.zoom*.4){started=true;try{const p=ev.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}
+      ev.style.opacity=sstep((ms-EV.zoom*.3)/(EV.zoom*.7)).toFixed(3);                  /* 어둡게 깔린 시작 화면에서 영상으로: 빛이 떠오르며 공간이 서서히 밝아짐 */
+      const left=len-ev.currentTime;flash.style.opacity=sstep(1-left/.5).toFixed(3);    /* 끝 0.5초 동안 빛이 화면을 덮음 */
+      if(ev.ended||left<=.04||ms>EV.zoom+len*1000+1500){
+        swapAt=now;show();eatUntil=0;
+        intro.classList.remove("flying","lit");intro.style.transform="";intro.style.removeProperty("--ui");
+        try{ev.pause();}catch(e){}ev.style.opacity="0";veil.classList.remove("on");
+        flash.style.opacity="1";app.style.transformOrigin=`50% ${(H*.42).toFixed(0)}px`;app.style.transform="scale(1.14)";
+      }
+    }else{
+      const r=cl((now-swapAt)/EV.reveal),e=1-Math.pow(1-r,3),rho=sstep(Math.pow(r,.6))*diag*.78;      /* 빛이 가운데부터 걷히며 새 화면이 내려앉음 */
+      app.style.transform=`scale(${(1+.14*(1-e)).toFixed(4)})`;
+      const mask=`radial-gradient(circle at 50% 46%, transparent ${(rho*.5).toFixed(1)}px, #000 ${(rho+1).toFixed(1)}px)`;
+      flash.style.webkitMaskImage=mask;flash.style.maskImage=mask;flash.style.opacity=(1-sstep((r-.3)/.7)).toFixed(3);
+      if(r>=1){app.style.transform="";app.style.transformOrigin="";flash.style.opacity="0";flash.style.webkitMaskImage=flash.style.maskImage="none";entering=false;return;}
     }
     requestAnimationFrame(frame);
   }
@@ -1113,7 +1156,7 @@ function stopReel(){
   if(!reel.on)return;reel.on=false;cancelAnimationFrame(reel.raf);removeEventListener("resize",sizeReel);$("reelv").pause();
   const r=$("reel");r.classList.add("out");
   $("intro").hidden=false;document.body.classList.add("mode-intro");resetTrio();window.scrollTo({top:0});setSnowDensity(90);
-  setTimeout(()=>{r.hidden=true;},520);armIdle();
+  setTimeout(()=>{r.hidden=true;},520);armIdle();prepEnter();
 }
 $("reel").addEventListener("pointerdown",e=>{e.stopPropagation();eatClicks(450);stopReel();});
 /* 키보드만 쓰는 PC에서도 쇼릴·트레일러를 넘길 수 있게 */
