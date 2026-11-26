@@ -100,6 +100,16 @@ body.mode-intro #snow{z-index:6}
   radial-gradient(ellipse 70% 55% at 50% 42%,rgba(8,24,16,0),rgba(8,24,16,.62) 75%),
   linear-gradient(180deg,rgba(6,20,14,.5),rgba(6,20,14,.12) 35%,rgba(6,20,14,.72));pointer-events:none}
 .intro-in{margin:auto}
+/* 건물 안의 불빛: 배경 그림에서 뽑은 불빛 층(tools/atrium_glow.py)을 어두운 막 위에 겹쳐 은은하게 밝혔다 줄임.
+   a 창문·큰 조명은 천천히 숨 쉬듯, b·c 작은 전구는 조금 빠르게 서로 엇갈려. 배경 그림 자체는 그대로입니다. */
+.intro-glow{position:fixed;inset:0;pointer-events:none;mix-blend-mode:screen}
+.intro-glow i{position:absolute;inset:0;background:#000 center/cover no-repeat;mix-blend-mode:screen;opacity:.45;will-change:opacity}
+.intro-glow .ga{background-image:url("assets/atrium-glow-a.webp");mix-blend-mode:normal;animation:glowA 6.4s ease-in-out infinite alternate}
+.intro-glow .gb{background-image:url("assets/atrium-glow-b.webp");animation:glowB 2.7s ease-in-out infinite alternate}
+.intro-glow .gc{background-image:url("assets/atrium-glow-c.webp");animation:glowB 3.7s ease-in-out -1.5s infinite alternate}
+@keyframes glowA{from{opacity:.2}to{opacity:.64}}
+@keyframes glowB{from{opacity:.08}to{opacity:.8}}
+.intro.flying .intro-glow{opacity:var(--ui,1)}
 /* 포인터를 따라가는 촛불빛 */
 .intro-light{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .7s;mix-blend-mode:screen;
   background:
@@ -452,7 +462,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 
 /* 움직임 줄이기 */
 @media (prefers-reduced-motion:reduce){
-  .tcard,.tslot,.tarot-card,.stage,.deck button,#veil,#wisp,#flash,.cardslot,.cardslot .tarot-card,.tilt,.stage>*,.tarot-body>*,.holly,.rail li.on::before,.tarot-card .shine,.stmt,.stmt b,.stmt p,.qnum b,.qaxis,.balance .knob,.stop,.meter i,.axis,.rec,.opt,.pick,.pickwrap .chev,.intro-in>*,.intro-light,.enter,.garland,.spark,.ripple,.tcard .back svg,.trio-msg,.trio-cap .dots i{animation:none!important;transition:none!important}
+  .tcard,.tslot,.tarot-card,.stage,.deck button,#veil,#wisp,#flash,.cardslot,.cardslot .tarot-card,.tilt,.stage>*,.tarot-body>*,.holly,.rail li.on::before,.tarot-card .shine,.stmt,.stmt b,.stmt p,.qnum b,.qaxis,.balance .knob,.stop,.meter i,.axis,.rec,.opt,.pick,.pickwrap .chev,.intro-glow i,.intro-in>*,.intro-light,.enter,.garland,.spark,.ripple,.tcard .back svg,.trio-msg,.trio-cap .dots i{animation:none!important;transition:none!important}
   .tcard,.tilt,.cardslot .tarot-card{--tx:0deg!important;--ty:0deg!important;--lift:0px!important;--sc:1!important}
   #snow{display:none}
 }
@@ -464,6 +474,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 
 <!-- ============ 인트로 ============ -->
 <section class="intro" id="intro" aria-label="AI-E랩 연구 여정 시작">
+  <div class="intro-glow" aria-hidden="true"><i class="ga"></i><i class="gb"></i><i class="gc"></i></div>
   <div class="intro-light" aria-hidden="true"></div>
   <div id="sparks" aria-hidden="true"></div>
   <div class="intro-frame" aria-hidden="true"></div>

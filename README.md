@@ -67,6 +67,20 @@ node tools/check.js
 - 한글 글자와 연구회의 실제 카드는 영상에 들어 있지 않고 `index.html`이 그 위에 그립니다. 그래서 문구나 카드를 바꿔도 영상을 다시 만들 필요가 없습니다.
 - 영상의 길이나 장면 시각을 바꾸면 `index.html`의 `VEND`, `T_MAP`, `T_SAY`, `T_LOCK`과 `reelText`의 시각을 함께 맞춰야 합니다.
 
+## 시작 화면 배경의 불빛
+
+시작 화면의 배경 그림 `assets/christmas-atrium.webp`은 그대로 두고, 그 안의 불빛(창문, 조명, 화환의 전구)만 따로 뽑은 `assets/atrium-glow-a·b·c.webp`를 위에 겹쳐 은은하게 밝혔다 줄입니다. 배경 그림을 바꾸면 아래 도구로 다시 만듭니다.
+
+```bash
+pip install pillow numpy
+```
+
+```bash
+python3 tools/atrium_glow.py
+```
+
+밝기와 빠르기는 `index.html`의 `glowA`(창문·큰 조명), `glowB`(작은 전구)에서 조절합니다.
+
 ## 입장 전환 영상
 
 시작 화면에서 여정으로 들어갈 때 나오는 `assets/enter.webm`(1.9 MB)과 `assets/enter.mp4`(1.6 MB)입니다. 금빛이 아트리움 안쪽으로 날아가고 카메라가 따라가다 빛 속으로 들어갑니다. 받지 못했으면 코드로 그리는 전환이 대신 나옵니다.
