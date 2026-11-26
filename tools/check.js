@@ -45,6 +45,9 @@ const ok = (cond, label, detail = '') => { console.log(`${cond ? 'PASS' : 'FAIL'
     ok(log.ext.length === 0, '외부 요청 없음', log.ext.slice(0, 2).join(' '));
     ok(log.notFound.length === 0, '없는 파일 요청 없음', log.notFound.slice(0, 3).join(' '));
     ok(f.length === 0, '글꼴 로드', f.join(', ')); ok(imgs.length === 0, '카드 그림 20장 로드', imgs.join(', '));
+    const glow = await p.evaluate(async () => { const bad = []; for (const k of ['a', 'b', 'c']) { const im = new Image(); im.src = `assets/atrium-glow-${k}.webp`; await new Promise(r => { im.onload = im.onerror = r; }); if (im.naturalWidth !== 768) bad.push(k); }
+      const layers = [...document.querySelectorAll('.intro-glow i')].map(e => getComputedStyle(e)); if (layers.length !== 3 || layers.some(c => !/glow/.test(c.animationName) || !c.backgroundImage.includes('atrium-glow'))) bad.push('layers'); return bad; });
+    ok(glow.length === 0, '시작 화면 배경의 불빛 층 3장이 있고 움직임', glow.join(', '));
     ok(await p.evaluate(() => FILLED === CARDS.length && CARDS.every(c => SCRIPTS[c.group])), '연구회 20곳 모두 내용과 트레일러 있음');
     ok(log.errs.length === 0, '첫 화면 콘솔 오류 없음', log.errs[0]); await p.context().close(); }
 
