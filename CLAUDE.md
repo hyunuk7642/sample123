@@ -19,6 +19,7 @@ AI교육 성과주간 체험 구역에서 태블릿(터치)과 PC(마우스)로 
 | `tools/cards_from_csv.py` | 폼 응답 CSV → `data/cards.json` + `index.html`의 CARDS 블록 |
 | `tools/card_art.py` | 그림 → `assets/cards` + `index.html`의 ART 블록 |
 | `tools/subset_fonts.py` | 글꼴 다시 줄이기 |
+| `tools/atrium_glow.py` | 시작 화면 배경 그림 → 불빛 층 `assets/atrium-glow-a·b·c.webp` (배경을 바꾸면 다시 돌림) |
 | `tools/check.js` | 전체 점검 |
 
 ## index.html 안의 흐름
