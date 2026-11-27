@@ -470,7 +470,7 @@ main{flex:1;width:100%;max-width:980px;margin:14px auto 40px;padding:0 16px}
 </head>
 <body>
 <canvas id="snow" aria-hidden="true"></canvas>
-<section id="reel" aria-label="오프닝 영상. 화면을 누르면 바로 시작합니다" hidden><video id="reelv" muted playsinline preload="none" tabindex="-1" aria-hidden="true"><source src="assets/opening.webm" type="video/webm"><source src="assets/opening.mp4" type="video/mp4"></video><canvas id="reelc"></canvas><span class="hint">TAP · 화면을 누르면 바로 시작</span></section>
+<section id="reel" aria-label="오프닝 영상. 화면을 누르면 바로 시작합니다" hidden><video id="reelv" muted playsinline preload="none" tabindex="-1" aria-hidden="true"><source src="assets/opening.webm?v=2" type="video/webm"><source src="assets/opening.mp4?v=2" type="video/mp4"></video><canvas id="reelc"></canvas><span class="hint">TAP · 화면을 누르면 바로 시작</span></section>
 
 <!-- ============ 인트로 ============ -->
 <section class="intro" id="intro" aria-label="AI-E랩 연구 여정 시작">
@@ -1187,6 +1187,7 @@ function reelFrame(now){
      4.8~7.0초 카드들이 소용돌이를 그리며 가운데로 모여 하나의 고리로 포개짐
      7.0~8.9초 포개진 고리 한가운데에 빛이 켜짐
      8.9~12.9초 금빛 한 점 → 물결 같은 고리가 퍼지며 잦아듦
+   영상 파일을 바꾸면 <source> 주소 뒤의 판 번호(?v=)를 하나 올립니다. 안 그러면 전에 열어 본 기기는 예전 영상을 계속 틉니다.
    그 위에 이 코드가 그리는 것:
      글자("질문." "수업." "배움." …)와 모인 연구회 수, 자막
      11.2초부터: 연구회가 낸 실제 카드 스무 장이 가운데에서 나와 입체로 도는 고리가 되고, 한 장이 뽑혀 설계·적용·배움이 펼쳐짐
