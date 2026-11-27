@@ -1182,9 +1182,10 @@ function reelFrame(now){
   drawReel(t);reel.raf=requestAnimationFrame(reelFrame);
 }
 /* ---- 오프닝 필름 (19.6초): 실제 영상 위에 글자와 연구회 카드를 얹습니다. ----
-   바탕 영상(assets/opening.webm · .mp4, 12.9초)은 생성 영상 두 편을 이어 붙인 것입니다:
-     0~5.9초   카드 한 장이 떠 있다가 수십 장으로 불어나 화면을 채움
-     5.9~8.9초 카드들이 가운데에서 겹쳐 돌며 소용돌이쳐 빨려 들어감
+   바탕 영상(assets/opening.webm · .mp4, 12.9초)은 생성 영상 세 편을 이어 붙인 것입니다:
+     0~4.8초   카드 한 장이 떠 있다가 여러 장으로 늘어나 저마다 떠다님
+     4.8~7.0초 카드들이 소용돌이를 그리며 가운데로 모여 하나의 고리로 포개짐
+     7.0~8.9초 포개진 고리 한가운데에 빛이 켜짐
      8.9~12.9초 금빛 한 점 → 물결 같은 고리가 퍼지며 잦아듦
    그 위에 이 코드가 그리는 것:
      글자("질문." "수업." "배움." …)와 모인 연구회 수, 자막
@@ -1262,15 +1263,17 @@ function reelCore(g,t,cx,cy,m){
 function reelText(g,t,m){
   const {W,H,u}=reel,cx=W/2,cy=H*.47;
   const word=(txt,a,b)=>{const al=sm(a,a+.25,t)*(1-sm(b-.25,b,t));if(al<=0)return;g.save();g.globalAlpha=al;g.font=fS(Math.min(m*.27,W*.27)*(1+.08*(t-a)/(b-a)));g.textAlign="center";g.textBaseline="middle";g.shadowColor="rgba(4,16,11,.95)";g.shadowBlur=40*u;g.fillStyle=TP.cream;g.fillText(txt,cx,cy);g.restore();};
-  word("질문.",.5,1.7);word("수업.",1.7,2.9);word("배움.",2.9,4.1);
-  const ph=sm(4.2,4.6,t)*(1-sm(5.5,5.9,t));
+  word("질문.",.4,1.45);word("수업.",1.45,2.5);word("배움.",2.5,3.55);
+  const ph=sm(3.6,4,t)*(1-sm(4.7,5.1,t));                                                /* 카드들이 모이기 시작하기 전에 물러남 */
   if(ph>0){g.fillStyle=`rgba(4,16,11,${(.5*ph).toFixed(3)})`;g.fillRect(0,0,W,H);const s1=Math.min(m*.16,W*.135);g.save();g.globalAlpha=ph;g.textAlign="center";g.textBaseline="middle";g.shadowColor="rgba(4,16,11,.9)";g.shadowBlur=24*u;
     g.font=fB(s1*.42,500);g.fillStyle=TP.cream;g.fillText("교실마다",cx,cy-s1*.78);g.font=fS(s1);g.fillStyle=TP.candle;g.fillText("서로 다른 결",cx,cy+s1*.1);g.restore();}
-  const n=t<1.4?1:Math.min(20,1+Math.floor(19*Math.pow(clamp((t-1.4)/2.6),1.5))),ca=sm(.2,.6,t)*(1-sm(5.5,5.9,t));      /* 영상 속 카드가 불어나는 속도에 맞춰 올라감 */
+  const n=t<1.4?1:Math.min(20,1+Math.floor(19*Math.pow(clamp((t-1.4)/2.9),1.5))),ca=sm(.2,.6,t)*(1-sm(4.7,5.1,t));      /* 영상 속 카드가 불어나는 속도에 맞춰 올라감 */
   if(ca>0){const pad=Math.max(22*u,18),by=H-pad-36*u,tx=String(n).padStart(2,"0");g.save();g.globalAlpha=ca;g.textBaseline="alphabetic";g.textAlign="left";g.shadowColor="rgba(4,16,11,.9)";g.shadowBlur=14*u;g.font=fD(Math.max(34,66*u));g.fillStyle=TP.cream;g.fillText(tx,pad,by);const w=g.measureText(tx).width;
     g.font=fS(Math.max(15,27*u));g.fillStyle=TP.candle;g.fillText("연구회",pad+w+10*u,by);g.font=fM(Math.max(9,10*u));g.fillStyle="rgba(243,238,223,.7)";g.fillText(n<20?"AND COUNTING":"ALL TOGETHER",pad+w+11*u,by-Math.max(20,32*u));g.restore();}
-  reelCap(g,"스무 교실의 서로 다른 ","결",sm(6.2,6.5,t)*(1-sm(8.2,8.6,t)),H*.86);
-  reelCap(g,"포개어 하나가 되는 ","겹",sm(9.6,9.9,t)*(1-sm(10.9,11.3,t)),H*.86);
+  const c1=sm(5.2,5.5,t)*(1-sm(6.7,7,t)),c2=sm(7.2,7.5,t)*(1-sm(10.6,11,t)),cs=Math.max(c1,c2);   /* c1: 소용돌이를 그리며 모이는 동안 · c2: 고리로 포개진 순간부터 빛과 물결까지 */
+  if(cs>0){const gr=g.createLinearGradient(0,H*.76,0,H);gr.addColorStop(0,"rgba(4,16,11,0)");gr.addColorStop(1,`rgba(4,16,11,${(.82*cs).toFixed(3)})`);g.fillStyle=gr;g.fillRect(0,H*.76,W,H*.24);}   /* 자막이 영상 속 고리의 아랫단과 겹쳐도 읽히게 아래를 어둡게 깖 */
+  reelCap(g,"스무 교실의 서로 다른 ","결",c1,H*.925);
+  reelCap(g,"포개어 하나가 되는 ","겹",c2,H*.925);
 }
 /* 실제 카드 스무 장: 가운데에서 나와 입체로 도는 고리 → 한 장이 뽑혀 세 단계가 펼쳐짐 (s: 이 막이 시작된 뒤의 시간) */
 function reelMap(g,s,m,vid){
@@ -1361,7 +1364,7 @@ function reelUI(t,light){
   g.save();g.font=fM(Math.max(10,11*u));g.fillStyle=col;g.textBaseline="top";g.textAlign="right";g.fillText("AI-E랩 · OPENING",W-pad,top);
   const ff=String(Math.floor((t%1)*30)).padStart(2,"0"),sec=String(Math.floor(t)).padStart(2,"0");
   g.textAlign="left";g.textBaseline="bottom";g.fillText(`00:00:${sec}:${ff}`,pad,bot);
-  const bw=Math.min(W*.3,280*u),x0=W-pad-bw;g.fillStyle=dim;g.fillRect(x0,bot-4,bw,2);g.fillStyle=col;g.fillRect(x0,bot-4,bw*clamp(t/reel.T),2);[5.9,T_MAP,T_SAY].forEach(c=>g.fillRect(x0+bw*c/reel.T-1,bot-8,2,10));
+  const bw=Math.min(W*.3,280*u),x0=W-pad-bw;g.fillStyle=dim;g.fillRect(x0,bot-4,bw,2);g.fillStyle=col;g.fillRect(x0,bot-4,bw*clamp(t/reel.T),2);[4.8,T_MAP,T_SAY].forEach(c=>g.fillRect(x0+bw*c/reel.T-1,bot-8,2,10));
   g.restore();
 }
 /* ============================================================
