@@ -6,12 +6,15 @@
 - data/cards.json 을 다시 쓰고, index.html 의  /* CARDS:BEGIN */ … /* CARDS:END */  사이를 바꿉니다.
 - 대표교사 성함·이메일 같은 개인정보는 넣지 않습니다. 카드에 보이는 내용만 추립니다.
 - 연구회명은 index.html 의 G 배열(폼 드롭다운과 같은 이름)과 글자 그대로 맞아야 합니다.
+- 폼을 낸 뒤 연구회가 따로 요청한 정정은 data/corrections.json 에 적습니다. 폼 응답 위에 덮어쓰므로
+  새 응답으로 다시 채워도 정정이 남습니다.  {"연구회명": {"status": "…", "intro": "…"}}
 """
 import csv, io, json, re, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 HTML = ROOT / "index.html"
 OUT = ROOT / "data" / "cards.json"
+FIXES = ROOT / "data" / "corrections.json"
 
 # 폼의 주제 이름 → 웹앱의 주제 키
 TOPIC_KEY = {
@@ -99,6 +102,13 @@ def main(path: str):
             "field": pairs([["대상·교과", g("target")], ["활동", g("activity")], ["시행착오", g("trial")]]),
             "learn": pairs([["학생의 목소리", g("voice")], ["나타난 변화", g("change")]]),
         }
+    applied = []
+    if FIXES.exists():                                       # 연구회가 요청한 정정을 폼 응답 위에 덮어씀
+        for name, fix in json.loads(FIXES.read_text(encoding="utf-8")).items():
+            if name not in cards: sys.exit(f"corrections.json: 응답에 없는 연구회명 → {name}")
+            for k, v in fix.items():
+                if k not in cards[name]: sys.exit(f"corrections.json: {name} 에 없는 항목 → {k}")
+                cards[name][k] = v; applied.append(f"{name}.{k}")
     OUT.write_text(json.dumps(cards, ensure_ascii=False, indent=1), encoding="utf-8")
 
     html = HTML.read_text(encoding="utf-8")
@@ -108,6 +118,7 @@ def main(path: str):
     HTML.write_text(html[:i] + block + html[j + len(b):], encoding="utf-8")
     print(f"{len(cards)}개 연구회 카드를 채웠습니다 → {OUT.relative_to(ROOT)}, index.html")
     for n in cards: print(" -", n, "·", cards[n]["status"] or "상태 없음", "·", cards[n]["level"] or "학교급 미확인")
+    if applied: print("정정 반영:", ", ".join(applied))
 
 if __name__ == "__main__":
     if len(sys.argv) < 2: sys.exit(__doc__)
