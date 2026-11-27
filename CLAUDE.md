@@ -16,7 +16,8 @@ AI교육 성과주간 체험 구역에서 태블릿(터치)과 PC(마우스)로 
 | `assets/opening.webm` · `.mp4` | 오프닝의 바탕 영상(12.9초). 글자와 실제 카드는 `index.html`이 그 위에 그림. 만든 방법은 README |
 | `assets/enter.webm` · `.mp4` | 입장 전환 영상(4초). 시작 화면 배경 그림에서 이어지므로 배경을 바꾸면 다시 만들어야 함 |
 | `data/cards.json` | 카드 내용 원본 (도구가 만든 결과물, 손으로 고치지 않음) |
-| `tools/cards_from_csv.py` | 폼 응답 CSV → `data/cards.json` + `index.html`의 CARDS 블록 |
+| `data/corrections.json` | 폼 제출 뒤 연구회가 요청한 정정. 도구가 폼 응답 위에 덮어씀 (손으로 고치는 곳은 여기) |
+| `tools/cards_from_csv.py` | 폼 응답 CSV(+ 정정) → `data/cards.json` + `index.html`의 CARDS 블록 |
 | `tools/card_art.py` | 그림 → `assets/cards` + `index.html`의 ART 블록 |
 | `tools/subset_fonts.py` | 글꼴 다시 줄이기 |
 | `tools/atrium_glow.py` | 시작 화면 배경 그림 → 불빛 층 `assets/atrium-glow-a·b·c.webp` (배경을 바꾸면 다시 돌림) |
