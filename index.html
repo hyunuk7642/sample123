@@ -978,7 +978,7 @@ function buildQuiz(el){
    <div class="qhint" aria-hidden="true"><span>← 가에 가깝다</span><span>나에 가깝다 →</span></div>
    <div class="row"><button class="btn ghost" id="bk">이전 문항</button></div>`;
   quiz.busy=false;quiz.fill=0;
-  requestAnimationFrame(()=>{const g=qGeom(),c=g.pad+g.w/2;quiz.L=c-8;quiz.R=c+8;$("knob").style.left=quiz.L+"px";$("knob").style.width="16px";fillTo(S.qi);});
+  requestAnimationFrame(()=>{if(!$("bal"))return;const g=qGeom(),c=g.pad+g.w/2;quiz.L=c-8;   /* 그 사이 다른 화면으로 넘어갔으면 저울이 없으므로 그만둠 */quiz.R=c+8;$("knob").style.left=quiz.L+"px";$("knob").style.width="16px";fillTo(S.qi);});
   qText(false);
   el.querySelectorAll(".stop").forEach(b=>b.onclick=()=>answer(+b.dataset.k,+b.dataset.b));
   $("bk").onclick=()=>{if(quiz.busy||!S.qi)return;S.resp.pop();S.qi--;fillTo(S.qi);qText(true);};
